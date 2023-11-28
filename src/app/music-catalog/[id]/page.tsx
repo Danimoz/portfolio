@@ -27,7 +27,8 @@ export default async function SingleComposition({ params: { id } }: { params: { 
         </div>
         <div className="my-4">
           {composition?.youtubeLinks && separateStringWithCommas(composition?.youtubeLinks as string).map((link) => (
-            <iframe 
+            <iframe
+              key={link} 
               width="560" 
               height="505"
               className="w-full" 

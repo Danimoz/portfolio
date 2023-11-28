@@ -27,7 +27,7 @@ export default async function MusicCatalog({ searchParams }: { searchParams: { [
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4'>
           {compositions?.map((composition) => (
             <Link href={`/music-catalog/${composition._id}`} key={composition._id} className="rounded-xl bg-white text-blue-600 px-6 py-3 hover:scale-105">
-              <h2 className="">{composition.title}</h2> 
+              <h2>{composition.title}</h2> 
             </Link>
           ))}
         </div>

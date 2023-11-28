@@ -1,21 +1,6 @@
 import { IProject } from "@/types"
 import { getPlaiceholder } from "plaiceholder"
-import toast  from "react-hot-toast"
 
-
-interface NotificationProps {
-  type: 'error' | 'success'
-  message: string
-}
-
-export const notify = ({ type, message }: NotificationProps) => {
-  try {
-    if (type === 'error') toast.error(message);
-    else toast.success(message);
-  } catch (error) {
-    console.error('Error occurred in notify function:', error);
-  }
-}
 
 export const separateStringWithCommas = (value: string) => { 
   const values = value.split(',')

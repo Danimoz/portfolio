@@ -13,9 +13,9 @@ export default function Home() {
           <Title />
 
           <div className='z-10 md:w-[530px]'>
-            <p className='text-lg leading-loose mt-12'>I'm a software engineer, pianist, and composer.</p>
+            <p className='text-lg leading-loose mt-12'>I&apos;m a software engineer, pianist, and composer.</p>
             <p className='text-lg leading-loose'>My mission is to create beautiful melodies in both the world of code and music sheets, crafting innovative software solutions and soulful compositions.</p>
-            <p className='text-lg leading-loose'>Whether it's writing elegant code or composing melodies that resonate, I strive to create artistry that touches both hearts and screens.</p>
+            <p className='text-lg leading-loose'>Whether it&apos;s writing elegant code or composing melodies that resonate, I strive to create artistry that touches both hearts and screens.</p>
           </div>
 
           <div className='flex gap-x-6 mt-12'>

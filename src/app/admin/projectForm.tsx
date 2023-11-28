@@ -2,14 +2,14 @@
 
 import { SubmitButton } from "@/components/SubmitButton";
 import { addProject } from "@/lib/actions";
-import { notify } from "@/lib/utils";
+import toast from "react-hot-toast";
 
 export default function ProjectForm() {
   
   async function action(formData: FormData) {
     const result = await addProject(formData);
     if (result?.status === 201) {
-      notify({ type: 'success', message: 'Project added succesfully' });
+      toast.success('Project added succesfully');
     }
   }
 

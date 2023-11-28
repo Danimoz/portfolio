@@ -2,8 +2,8 @@
 
 import { SubmitButton } from "@/components/SubmitButton";
 import { addComposition } from "@/lib/actions";
-import { notify } from "@/lib/utils";
 import { ICategory } from "@/types";
+import toast from "react-hot-toast";
 
 interface CompositionFormProps {
   categories: string;
@@ -13,9 +13,9 @@ export default function CompositionForm({ categories }: CompositionFormProps) {
   async function action(formData: FormData) {
     const result = await addComposition(formData);
     if (result?.status === 201) {
-      notify({ type: 'success', message: 'Composition added succesfully' });
+      toast.success('Composition added succesfully');
     } else if (result?.status === 400) {
-      notify({ type: 'error', message: 'Something went wrong' });
+      toast.error('Error creating composition');
     }
   }
 
