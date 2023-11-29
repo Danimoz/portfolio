@@ -1,7 +1,23 @@
 import { getSingleComposition } from "@/lib/actions";
 import { separateStringWithCommas } from "@/lib/utils";
+import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+
+type Props = {
+  params: { id: string }
+  searchParams: { [key: string]: string | string[] | undefined }
+}
+
+export async function generateMetadata({ params, searchParams }: Props, parent: ResolvingMetadata): Promise<Metadata> {
+  const id = params.id
+  const { data } = await getSingleComposition(id)
+ 
+  return {
+    title: data?.title + ' - Daniel Azubuine',
+  }
+}
+
 
 export default async function SingleComposition({ params: { id } }: { params: { id: string }}){
   const { data: composition, status } = await getSingleComposition(id);

@@ -2,6 +2,12 @@ import { getCategories, getCompositions } from "@/lib/actions";
 import Link from "next/link";
 import CompositionSearch from "./search";
 import CompositionCategories from "./categories";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: 'Daniel Azubuine Music Catalog',
+  description: 'Works composed by Daniel Azubuine, Daniel Azubuine songs'
+}
 
 export default async function MusicCatalog({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined}}){
   const search = typeof searchParams.search === 'string' ? searchParams.search : undefined;

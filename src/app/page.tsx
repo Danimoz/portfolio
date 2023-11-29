@@ -18,7 +18,7 @@ export default function Home() {
             <p className='text-lg leading-loose'>Whether it&apos;s writing elegant code or composing melodies that resonate, I strive to create artistry that touches both hearts and screens.</p>
           </div>
 
-          <div className='flex gap-x-6 mt-12'>
+          <div className='flex gap-x-6 my-12'>
             <Link href='/projects' className='bg-white rounded-3xl text-blue-600 text-lg font-bold px-6 py-4 hover:scale-110'>My Projects</Link>
             <Link href='/music-catalog' className='bg-transparent border border-white rounded-3xl text-lg font-bold px-6 py-4 hover:scale-110'>Listen to my music</Link>
           </div>

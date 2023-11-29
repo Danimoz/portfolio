@@ -1,10 +1,15 @@
 import ContactForm from "./contactForm";
 import AboutSlide from "./hero";
 import SocialLinks from "@/components/socialLinks";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: 'Contact Daniel Azubuine',
+  description: 'Reach out to Daniel Azubuine'
+}
+
 
 export default function Contact(){
-  
-
   return (
     <main className="container mx-auto px-6 md:px-0">
       <section className="my-4">

@@ -2,6 +2,13 @@ import { getProjects } from "@/lib/actions"
 import { getMultipleBase64, separateStringWithCommas } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: 'Daniel Azubuine Portfolio',
+  description: 'Software Projects done by Daniel Azubuine'
+}
+
 
 export default async function Projects() {
   const projects = await getProjects();

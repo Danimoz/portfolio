@@ -2,6 +2,12 @@ import { getCategories } from "@/lib/actions";
 import CategoryForm from "./categoryForm";
 import CompositionForm from "./compositionForm";
 import ProjectForm from "./projectForm";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false }
+}
+
 
 export default async function AdminPage(){
   const compositionCategories = await getCategories();
