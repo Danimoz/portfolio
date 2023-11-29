@@ -14,14 +14,17 @@ export default function Footer(){
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="flex flex-col">
             <p className="text-xl">Design by Drounz</p>
-            <div className="flex gap-x-6 mt-2">
+            <div className="flex justify-center gap-x-6 mt-2">
               {drounzSocialLinks.map((link) => (
                 <Link key={link.name} href={link.link} className="bg-white rounded-3xl text-blue-600 text-lg font-bold px-3 py-1 hover:scale-110"><link.icon size={30} /></Link>
               ))}
             </div>
           </div>
-
+          
+          <div className="mt-4">
+          <p className="text-xl mb-2">Reach out to me:</p>
           <SocialLinks />
+          </div>
         </div>
       </div>
     </footer>

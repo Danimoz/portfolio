@@ -12,7 +12,7 @@ export default function SocialLinks(){
   ];
 
   return (
-    <div className="flex mt-9 gap-x-4 md:gap-x-8 px-4">
+    <div className="flex gap-x-3 md:gap-x-8">
       {socialMediaLinks.map((link) => (
         <Link key={link.name} href={link.link} className="bg-white rounded-[50%] text-blue-600 text-lg font-bold px-3 py-3 hover:scale-110"><link.icon size={30} /></Link>
       ))}

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CiMenuFries } from "react-icons/ci";
 
 const navbarSections = [
@@ -14,6 +14,16 @@ const navbarSections = [
 
 export default function Navbar(){
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navbarRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (navbarRef.current && !navbarRef.current.contains(event.target as Node)) setIsMenuOpen(false)
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   return (
     <header className="w-full top-0 sticky z-50">
@@ -33,12 +43,17 @@ export default function Navbar(){
         </div>
       </nav>
 
-      <div className={isMenuOpen ? 'w-full px-8 fixed top-16 bg-gray-950 text-slate-200' : 'hidden'}>
-        {
-          navbarSections.map((section) => (
-            <Link key={section.name} href={section.link} className="block w-full p-2">{section.name}</Link>
-          ))
-        }
+      <div ref={navbarRef} className={isMenuOpen ? 'w-full px-8 fixed top-16 bg-gray-950 text-slate-200' : 'hidden'}>
+        {navbarSections.map((section) => (
+          <Link 
+            key={section.name} 
+            href={section.link} 
+            className="block w-full p-2"
+            onClick={() => isMenuOpen && setIsMenuOpen(false)}
+          >
+            {section.name}
+          </Link>
+        ))}
       </div>
     </header>
   )

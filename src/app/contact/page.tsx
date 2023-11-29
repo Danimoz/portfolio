@@ -19,7 +19,7 @@ export default function Contact(){
         </h1>
       </section>
 
-      <section className="relative py-12 md:flex  gap-x-8">
+      <section className="relative py-12 md:flex gap-x-8">
         <div>
           <p className="text-lg leading-relaxed">Whether you&apos;re seeking innovative software solutions to drive your business forward or looking for beautifully crafted musical compositions to enhance your projects, I&apos;m here to collaborate with you.</p>
           <p className="text-lg mt-4 leading-relaxed">As a seasoned software engineer, I specialize in building robust applications, architecting scalable systems, and optimizing code for peak performance. 
@@ -33,7 +33,9 @@ export default function Contact(){
             Don&apos;t be shy! If you have a project that you want to get started, think you need my help with something or just fancy saying hey, then get in touch.
           </p>
 
-          <SocialLinks />
+          <div className="mt-9">
+            <SocialLinks />
+          </div>
         </div>
         
         <AboutSlide />
