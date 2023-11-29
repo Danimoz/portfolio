@@ -9,7 +9,7 @@ export default function Footer(){
   ]
 
   return (
-    <footer className="bg-blue-600">
+    <footer className="bg-blue-600 rounded-t-2xl">
       <div className="container mx-auto py-4 md:py-12">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="flex flex-col">
