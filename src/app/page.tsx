@@ -5,7 +5,7 @@ import Link from 'next/link'
 export default function Home() {
   return (
     <main className='overflow-y-hidden'>
-      <section className='flex justify-center items-center h-screen overscroll-y-hidden'>
+      <section className='flex justify-center items-center min-h-screen overscroll-y-hidden'>
         <div className='px-8 container mx-auto flex flex-col'>
           <h2 className='text-5xl z-10 md:text-7xl font-bold leading-relaxed'>Daniel</h2>
           <h2 className='text-5xl z-10 md:text-7xl font-bold leading-relaxed'>Azubuine</h2>

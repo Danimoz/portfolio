@@ -21,7 +21,7 @@ export default function CompositionCategories({ categories }: { categories: stri
   const categoriesParsed: ICategory[] = JSON.parse(categories);
 
   return (
-    <div className="flex gap-x-3 md:gap-x-6 mb-8 overflow-x-scroll">
+    <div className="flex gap-x-3 md:gap-x-6 mb-8 overflow-x-auto">
       {categoriesParsed?.map((category) => (
         <button 
           className={`px-6 py-3 rounded-xl text-sm md:text-lg ${active === category.name ? 'bg-blue-600 text-white' : 'border-2 border-slate-500'}`} 
