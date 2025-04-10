@@ -16,7 +16,7 @@ export default function Footer(){
             <p className="text-xl">Design by Drounz</p>
             <div className="flex justify-center gap-x-6 mt-2">
               {drounzSocialLinks.map((link) => (
-                <Link key={link.name} href={link.link} className="bg-white rounded-3xl text-blue-600 text-lg font-bold px-3 py-1 hover:scale-110"><link.icon size={30} /></Link>
+                <Link key={link.name} href={link.link} className="bg-white rounded-3xl text-blue-600 text-lg font-bold px-3 py-1 hover:scale-110"><link.icon size={24} /></Link>
               ))}
             </div>
           </div>

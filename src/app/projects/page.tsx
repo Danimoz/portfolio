@@ -23,9 +23,9 @@ export default async function Projects() {
         </h1>
       </section>
 
-      <section className="py-9">
+      <section className="py-9 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {projects.data?.map((project, index) => (
-          <Link href={project.link} key={project.name} className="hover:shadow-2xl mb-6">
+          <Link href={project.link} key={project.name} className="hover:shadow-2xl flex flex-col h-full">
             <Image 
               src={project.image} 
               alt={project.name}
@@ -36,7 +36,7 @@ export default async function Projects() {
               className="w-full h-60 rounded-tl-2xl rounded-tr-2xl transform brightness-90 transition hover:brightness-110" 
               style={{ transform: "translate3d(0, 0, 0)" }}
             />
-            <div className="bg-white dark:bg-zinc-900 py-4 px-6 border-b-4 border-slate-500">
+            <div className="bg-white dark:bg-zinc-900 py-4 px-6 border-b-4 border-slate-500 flex-1 mt-6">
               <h2 className="uppercase text-xl font-bold py-4">{project.name}</h2>
               <p className="text-base">{project.description}</p>
               <p className="text-base my-3">{project.role}</p>

@@ -51,7 +51,6 @@ export async function addProject(project: FormData){
   } catch(error) {
     console.error(error)
     return { status: 400, message: 'An error occured' }
-
   }
 }
 
@@ -59,7 +58,7 @@ export async function addProject(project: FormData){
 export async function getProjects(){
   try {
     await connectToDb();
-    const projects: IProject[] = await Project.find()
+    const projects: IProject[] = await Project.find().sort({ _id: -1 })
     return { status: 200, data: projects }
   } catch(error) {
     return { status: 400, data: [] }
