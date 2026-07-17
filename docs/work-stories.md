@@ -67,11 +67,13 @@ End with the best next action: visit the product, inspect the source, read relat
 
 ## Media and formatting
 
-The Studio Console stores stories as Tiptap JSON, not HTML. The allowed vocabulary is intentionally small: paragraphs, H2/H3 headings, bold, italic, bullet and numbered lists, blockquotes, code, dividers, links, and images.
+The Studio Console stores stories as Tiptap JSON, not HTML. The allowed vocabulary is intentionally small: paragraphs, H2/H3 headings, bold, italic, bullet and numbered lists, blockquotes, code, dividers, links, images, and YouTube videos.
 
 - Give every image an alt description that communicates what a non-visual reader needs from it.
 - Use an image when it proves or clarifies a point, not as decoration between every paragraph.
 - Introduce screenshots in the surrounding copy. Do not publish an unexplained screenshot dump.
+- Paste a standard YouTube, `youtu.be`, Shorts, or embed URL into the YouTube tool. The Studio Console stores only the validated video ID and renders a responsive privacy-enhanced player inside the story.
+- Give every video a concise title that identifies its content for screen-reader users. Introduce the video in the surrounding copy so readers know why it is there.
 - Use blockquotes for a decisive observation or verified testimonial, not ordinary emphasis.
 - Use code only when the implementation itself is part of the story.
 - Uploaded story images live in the portfolio's Cloudinary folder and are referenced by URL in the JSON document.

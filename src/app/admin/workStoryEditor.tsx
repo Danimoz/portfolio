@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 import { uploadStoryImage } from '@/lib/actions'
 import { workStoryExtensions } from '@/lib/workStoryExtensions'
 import { hasWorkStoryContent } from '@/lib/workStory'
+import { getYouTubeVideoId } from '@/lib/youtube'
 import styles from './workStoryEditor.module.css'
 import WorkStoryPreview, { type WorkStoryPreviewData } from './workStoryPreview'
 
@@ -20,8 +21,11 @@ export default function WorkStoryEditor({ id, initialContent, existingImage }: W
   const [document, setDocument] = useState(initialContent)
   const [linkUrl, setLinkUrl] = useState('')
   const [imageAlt, setImageAlt] = useState('')
+  const [videoUrl, setVideoUrl] = useState('')
+  const [videoTitle, setVideoTitle] = useState('')
   const [showLinkTools, setShowLinkTools] = useState(false)
   const [showImageTools, setShowImageTools] = useState(false)
+  const [showVideoTools, setShowVideoTools] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [preview, setPreview] = useState<WorkStoryPreviewData | null>(null)
   const imageInput = useRef<HTMLInputElement>(null)
@@ -138,6 +142,44 @@ export default function WorkStoryEditor({ id, initialContent, existingImage }: W
     toast.success('Image added to the story.')
   }
 
+  function applyYouTubeVideo() {
+    if (!editor) return
+
+    const videoId = getYouTubeVideoId(videoUrl)
+    if (!videoId) {
+      toast.error('Paste a valid YouTube video URL.')
+      return
+    }
+
+    const title = videoTitle.trim()
+    if (!title) {
+      toast.error('Add a short title that identifies the video.')
+      return
+    }
+
+    const attributes = { videoId, title }
+    if (editor.isActive('youtubeVideo')) {
+      editor.chain().focus().updateAttributes('youtubeVideo', attributes).run()
+      toast.success('YouTube video updated.')
+    } else {
+      editor.chain().focus().insertContent({ type: 'youtubeVideo', attrs: attributes }).run()
+      toast.success('YouTube video added to the story.')
+    }
+
+    setVideoUrl('')
+    setVideoTitle('')
+    setShowVideoTools(false)
+  }
+
+  function openYouTubeTools() {
+    const attributes = editor?.getAttributes('youtubeVideo') ?? {}
+    setVideoUrl(attributes.videoId ? `https://youtu.be/${attributes.videoId}` : '')
+    setVideoTitle(attributes.title ?? '')
+    setShowLinkTools(false)
+    setShowImageTools(false)
+    setShowVideoTools((visible) => !visible)
+  }
+
   const toolbarItems = [
     { label: 'Paragraph', active: editor?.isActive('paragraph'), run: () => editor?.chain().focus().setParagraph().run() },
     { label: 'H2', active: editor?.isActive('heading', { level: 2 }), run: () => editor?.chain().focus().toggleHeading({ level: 2 }).run() },
@@ -173,6 +215,8 @@ export default function WorkStoryEditor({ id, initialContent, existingImage }: W
           aria-pressed={Boolean(editor?.isActive('link'))}
           onClick={() => {
             setLinkUrl(editor?.getAttributes('link').href ?? '')
+            setShowImageTools(false)
+            setShowVideoTools(false)
             setShowLinkTools((visible) => !visible)
           }}
           disabled={!editor}
@@ -182,10 +226,23 @@ export default function WorkStoryEditor({ id, initialContent, existingImage }: W
         <button
           type="button"
           aria-expanded={showImageTools}
-          onClick={() => setShowImageTools((visible) => !visible)}
+          onClick={() => {
+            setShowLinkTools(false)
+            setShowVideoTools(false)
+            setShowImageTools((visible) => !visible)
+          }}
           disabled={!editor || isUploading}
         >
           {isUploading ? 'Uploading…' : 'Image'}
+        </button>
+        <button
+          type="button"
+          aria-expanded={showVideoTools}
+          aria-pressed={Boolean(editor?.isActive('youtubeVideo'))}
+          onClick={openYouTubeTools}
+          disabled={!editor}
+        >
+          YouTube
         </button>
         <span className={styles.toolbarSpacer} />
         <button type="button" onClick={() => editor?.chain().focus().undo().run()} disabled={!editor?.can().undo()}>
@@ -238,12 +295,49 @@ export default function WorkStoryEditor({ id, initialContent, existingImage }: W
         </div>
       ) : null}
 
+      {showVideoTools ? (
+        <div className={`${styles.inlineTools} ${styles.videoTools}`}>
+          <label htmlFor={`${id}-youtube-url`}>YouTube URL</label>
+          <input
+            id={`${id}-youtube-url`}
+            type="url"
+            value={videoUrl}
+            onChange={(event) => setVideoUrl(event.target.value)}
+            placeholder="https://youtu.be/â€¦"
+          />
+          <label htmlFor={`${id}-youtube-title`}>Video title</label>
+          <input
+            id={`${id}-youtube-title`}
+            type="text"
+            value={videoTitle}
+            onChange={(event) => setVideoTitle(event.target.value)}
+            placeholder="What this video demonstrates"
+          />
+          <button type="button" onClick={applyYouTubeVideo}>
+            {editor?.isActive('youtubeVideo') ? 'Update video' : 'Add video'}
+          </button>
+          {editor?.isActive('youtubeVideo') ? (
+            <button
+              type="button"
+              onClick={() => {
+                editor.chain().focus().deleteSelection().run()
+                setShowVideoTools(false)
+                setVideoUrl('')
+                setVideoTitle('')
+              }}
+            >
+              Remove
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
       <EditorContent
         editor={editor}
         className={styles.content}
         data-empty={!hasWorkStoryContent(document)}
       />
-      <p className={styles.hint}>Use H2 for chapters and H3 for sections. Every image needs a useful description.</p>
+      <p className={styles.hint}>Use H2 for chapters and H3 for sections. Every image and video needs a useful description.</p>
       <WorkStoryPreview
         dialogRef={previewDialog}
         titleId={`${id}-preview-title`}

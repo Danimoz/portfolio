@@ -58,12 +58,14 @@ export function legacyStoryToDocument(content: string): JSONContent {
 
 export function hasWorkStoryContent(document: JSONContent): boolean {
   if (document.type === 'image') return Boolean(document.attrs?.src)
+  if (document.type === 'youtubeVideo') return Boolean(document.attrs?.videoId)
   if (typeof document.text === 'string' && document.text.trim()) return true
   return childNodes(document).some(hasWorkStoryContent)
 }
 
 export function hasWorkStoryBody(document: JSONContent): boolean {
   if (document.type === 'heading') return false
+  if (document.type === 'youtubeVideo') return Boolean(document.attrs?.videoId)
   if (['paragraph', 'codeBlock'].includes(document.type ?? '') && containsText(document)) return true
   return childNodes(document).some(hasWorkStoryBody)
 }
@@ -86,6 +88,22 @@ export function getWorkStoryImages(document: JSONContent): WorkStoryImage[] {
   return [
     ...current,
     ...childNodes(document).flatMap(getWorkStoryImages),
+  ]
+}
+
+export type WorkStoryYouTubeVideo = {
+  videoId: unknown
+  title: unknown
+}
+
+export function getWorkStoryYouTubeVideos(document: JSONContent): WorkStoryYouTubeVideo[] {
+  const current = document.type === 'youtubeVideo'
+    ? [{ videoId: document.attrs?.videoId, title: document.attrs?.title }]
+    : []
+
+  return [
+    ...current,
+    ...childNodes(document).flatMap(getWorkStoryYouTubeVideos),
   ]
 }
 

@@ -11,7 +11,7 @@ Work Stories need headings, links, lists, quotes, code, dividers, and images. Th
 
 Store new Work Stories in `storyDocument` as Tiptap/ProseMirror JSON using a restricted shared extension schema. Use the same schema in the Studio Console editor, server-side validation, and public HTML generation.
 
-The allowed schema is StarterKit constrained to H2/H3 headings, plus links and block images. Story images are uploaded to Cloudinary and saved in the document as remote URLs with alt text. Links accept HTTP, HTTPS, and mailto destinations; score-purchase destinations are a separate Composition field and accept HTTP/HTTPS only.
+The allowed schema is StarterKit constrained to H2/H3 headings, plus links, block images, and structured YouTube video blocks. Story images are uploaded to Cloudinary and saved in the document as remote URLs with alt text. YouTube blocks store a validated video ID and accessible title, then render through YouTube's privacy-enhanced domain. Links accept HTTP, HTTPS, and mailto destinations; score-purchase destinations are a separate Composition field and accept HTTP/HTTPS only.
 
 Keep `storyContent` as a read-only migration fallback. The Studio Console converts a legacy story into JSON when it is opened, and saving persists the new `storyDocument`. Projects without `story: true` store neither story field.
 

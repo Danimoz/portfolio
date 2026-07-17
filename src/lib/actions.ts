@@ -9,9 +9,10 @@ import mongoose from 'mongoose';
 import { Resend } from 'resend';
 import { EmailTemplate } from '@/components/EmailTemplate';
 import type { JSONContent } from '@tiptap/core';
-import { getWorkStoryImages, hasWorkStoryBody } from './workStory';
+import { getWorkStoryImages, getWorkStoryYouTubeVideos, hasWorkStoryBody } from './workStory';
 import { generateHTML } from '@tiptap/html';
 import { workStoryExtensions } from './workStoryExtensions';
+import { getYouTubeVideoId } from './youtube';
 
           
 cloudinary.config({ 
@@ -111,6 +112,19 @@ function projectFields(formData: FormData, image: string) {
         if (!['http:', 'https:'].includes(imageUrl.protocol)) throw new Error('Unsupported protocol')
       } catch {
         throw new ActionInputError('Every Work Story image needs a valid remote URL')
+      }
+    }
+
+    for (const videoNode of getWorkStoryYouTubeVideos(storyDocument)) {
+      if (
+        typeof videoNode.videoId !== 'string' ||
+        getYouTubeVideoId(videoNode.videoId) !== videoNode.videoId
+      ) {
+        throw new ActionInputError('Every Work Story video needs a valid YouTube URL')
+      }
+
+      if (typeof videoNode.title !== 'string' || !videoNode.title.trim()) {
+        throw new ActionInputError('Every Work Story video needs a useful title')
       }
     }
 

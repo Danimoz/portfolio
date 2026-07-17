@@ -1,6 +1,7 @@
 import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import StarterKit from '@tiptap/starter-kit'
+import { YouTubeVideo } from './youtubeVideoExtension'
 
 export const workStoryExtensions = [
   StarterKit.configure({
@@ -31,4 +32,5 @@ export const workStoryExtensions = [
     allowBase64: false,
     HTMLAttributes: { loading: 'lazy' },
   }),
+  YouTubeVideo,
 ]
