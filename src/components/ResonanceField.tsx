@@ -1,7 +1,12 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import {
+  createSonicLayer,
+  SONIC_LAYER_TITLE,
+  type SonicLayerController,
+} from '@/lib/sonicLayer'
 
 const vertexShader = `#version 300 es
 in vec2 a_position;
@@ -18,6 +23,9 @@ uniform vec2 u_resolution;
 uniform vec2 u_pointer;
 uniform float u_time;
 uniform float u_mode;
+uniform float u_scroll;
+uniform float u_section;
+uniform vec3 u_audio;
 
 out vec4 outColor;
 
@@ -47,32 +55,45 @@ float fbm(vec2 p) {
   return value;
 }
 
+mat2 rotate2d(float angle) {
+  float c = cos(angle);
+  float s = sin(angle);
+  return mat2(c, -s, s, c);
+}
+
 void main() {
   vec2 resolution = max(u_resolution, vec2(1.0));
   vec2 uv = (2.0 * gl_FragCoord.xy - resolution.xy) / min(resolution.x, resolution.y);
   vec2 pointer = (2.0 * u_pointer - 1.0) * vec2(resolution.x / resolution.y, 1.0);
-  float time = u_time * 0.16;
+  float audioEnergy = dot(u_audio, vec3(0.48, 0.34, 0.18));
+  float time = u_time * (0.14 + u_audio.y * 0.08);
+  float scrollAngle = (u_scroll - 0.5) * 0.24 + (u_section - 0.5) * 0.08;
 
-  vec2 drift = uv;
-  drift.x += (fbm(uv * 1.25 + time * 0.22) - 0.5) * 0.22;
-  drift.y += (fbm(uv * 1.75 - time * 0.18) - 0.5) * 0.16;
+  vec2 drift = rotate2d(scrollAngle) * uv;
+  drift *= 1.0 + u_scroll * 0.13 + u_audio.x * 0.055;
+  drift.x += (fbm(uv * 1.25 + time * 0.22 + u_scroll * 0.8) - 0.5) * (0.22 + u_audio.y * 0.07);
+  drift.y += (fbm(uv * 1.75 - time * 0.18 - u_section * 0.6) - 0.5) * 0.16;
 
   float filaments = 0.0;
   float energy = 0.0;
   for (int i = 0; i < 6; i++) {
     float fi = float(i);
-    float frequency = mix(4.0, 13.0, fi / 5.0);
-    float phase = time * (0.32 + fi * 0.035) + fi * 1.37;
+    float frequency = mix(4.0, 13.0, fi / 5.0) * mix(0.92, 1.12, u_scroll);
+    float phase = time * (0.32 + fi * 0.035) + fi * 1.37 + u_scroll * (1.1 + fi * 0.22) + u_section * 1.8;
     float standing = sin(drift.x * frequency + phase) * cos(drift.y * (frequency * 0.72) - phase * 0.63);
-    float contour = abs(standing - mix(-0.32, 0.42, fi / 5.0));
+    float threshold = mix(-0.32, 0.42, fi / 5.0) + sin(u_scroll * 6.283 + fi) * 0.045;
+    float contour = abs(standing - threshold);
     float line = exp(-contour * mix(24.0, 52.0, fi / 5.0));
-    filaments += line * (0.18 + fi * 0.025);
+    filaments += line * (0.18 + fi * 0.025) * (1.0 + audioEnergy * 0.7);
     energy += line;
   }
 
   float distanceToPointer = length(uv - pointer);
-  float interference = sin(distanceToPointer * 18.0 - time * 2.0) * 0.5 + 0.5;
-  filaments += exp(-distanceToPointer * 2.5) * interference * 0.18;
+  float interference = sin(distanceToPointer * (18.0 + u_audio.z * 7.0) - time * 2.0) * 0.5 + 0.5;
+  filaments += exp(-distanceToPointer * 2.5) * interference * (0.18 + u_audio.x * 0.16);
+
+  float scrollWave = sin((drift.y + u_scroll * 1.4) * 7.0 - time * 0.7) * 0.5 + 0.5;
+  filaments += pow(scrollWave, 12.0) * (0.035 + u_section * 0.045);
 
   float vignette = smoothstep(1.65, 0.12, length(uv * vec2(0.72, 0.95)));
   float grain = hash(gl_FragCoord.xy + floor(u_time * 12.0)) - 0.5;
@@ -80,22 +101,25 @@ void main() {
   vec3 ink = vec3(0.018, 0.027, 0.032);
   vec3 cyan = vec3(0.19, 0.84, 0.76);
   vec3 silver = vec3(0.72, 0.88, 0.88);
-  vec3 modeTint = mix(vec3(0.10, 0.42, 0.40), vec3(0.42, 0.35, 0.20), u_mode);
+  vec3 music = vec3(0.46, 0.36, 0.16);
+  vec3 software = vec3(0.10, 0.42, 0.40);
+  vec3 modeTint = mix(software, music, u_mode);
+  modeTint = mix(modeTint, mix(cyan, silver, u_mode), u_section * 0.16);
+  vec3 audioTint = mix(cyan, vec3(0.82, 0.34, 0.16), clamp(u_audio.y * 0.9 + u_audio.z * 1.4, 0.0, 1.0));
 
   vec3 color = ink;
-  color += modeTint * fbm(uv * 0.72 + vec2(time * 0.08, -time * 0.04)) * 0.12;
-  color += mix(cyan, silver, clamp(energy * 0.13, 0.0, 0.7)) * filaments * vignette;
+  color += modeTint * fbm(uv * 0.72 + vec2(time * 0.08, -time * 0.04) + u_scroll * 0.3) * (0.12 + audioEnergy * 0.08);
+  color += mix(cyan, silver, clamp(energy * 0.13 + u_audio.z * 0.18, 0.0, 0.7)) * filaments * vignette;
+  color += audioTint * audioEnergy * 0.42 * vignette;
   color += grain * 0.012;
 
-  outColor = vec4(color, clamp(0.72 + filaments * 0.22, 0.0, 0.96));
+  outColor = vec4(color, clamp(0.72 + filaments * 0.22 + audioEnergy * 0.04, 0.0, 0.96));
 }
 `
 
-function compileShader(
-  gl: WebGL2RenderingContext,
-  type: number,
-  source: string,
-) {
+type SonicState = 'off' | 'starting' | 'on' | 'error'
+
+function compileShader(gl: WebGL2RenderingContext, type: number, source: string) {
   const shader = gl.createShader(type)
   if (!shader) return null
 
@@ -110,10 +134,81 @@ function compileShader(
   return shader
 }
 
+function averageBand(data: Uint8Array, start: number, end: number) {
+  let total = 0
+  const safeEnd = Math.min(end, data.length)
+  for (let index = start; index < safeEnd; index += 1) total += data[index]
+  return safeEnd > start ? total / (safeEnd - start) / 255 : 0
+}
+
+function readAudioBands(controller: SonicLayerController | null): [number, number, number] {
+  if (!controller) return [0, 0, 0]
+  controller.analyser.getByteFrequencyData(controller.frequencyData)
+  return [
+    Math.min(1, averageBand(controller.frequencyData, 1, 7) * 2.4),
+    Math.min(1, averageBand(controller.frequencyData, 7, 28) * 3.2),
+    Math.min(1, averageBand(controller.frequencyData, 28, 86) * 4.2),
+  ]
+}
+
 export default function ResonanceField() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const audioController = useRef<SonicLayerController | null>(null)
+  const audioGeneration = useRef(0)
+  const isMounted = useRef(false)
+  const sectionTarget = useRef(0)
+  const renderStaticFrame = useRef<(() => void) | null>(null)
   const pathname = usePathname()
   const mode = pathname.startsWith('/music-catalog') ? 1 : 0
+  const modeTarget = useRef(mode)
+  const [sonicState, setSonicState] = useState<SonicState>('off')
+
+  useEffect(() => {
+    modeTarget.current = mode
+    renderStaticFrame.current?.()
+  }, [mode])
+
+  useEffect(() => {
+    sectionTarget.current = 0
+    const sections = Array.from(
+      document.querySelectorAll<HTMLElement>('main > section, main > article, main > header'),
+    )
+    const sectionRatios = new Map<Element, number>()
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => sectionRatios.set(entry.target, entry.intersectionRatio))
+      let activeIndex = 0
+      let activeRatio = -1
+      sections.forEach((candidate, index) => {
+        const ratio = sectionRatios.get(candidate) ?? 0
+        if (ratio > activeRatio) {
+          activeRatio = ratio
+          activeIndex = index
+        }
+      })
+      sectionTarget.current = sections.length > 1 ? activeIndex / (sections.length - 1) : 0
+    }, { threshold: [0, 0.2, 0.45, 0.7, 1] })
+    sections.forEach((candidate) => observer.observe(candidate))
+    return () => observer.disconnect()
+  }, [pathname])
+
+  useEffect(() => {
+    isMounted.current = true
+    const handleAudioVisibility = () => {
+      const controller = audioController.current
+      if (!controller) return
+      void (document.hidden ? controller.suspend() : controller.resume())
+    }
+    document.addEventListener('visibilitychange', handleAudioVisibility)
+
+    return () => {
+      isMounted.current = false
+      audioGeneration.current += 1
+      document.removeEventListener('visibilitychange', handleAudioVisibility)
+      const controller = audioController.current
+      audioController.current = null
+      if (controller) void controller.stop()
+    }
+  }, [])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -178,8 +273,16 @@ export default function ResonanceField() {
     const pointer = gl.getUniformLocation(program, 'u_pointer')
     const time = gl.getUniformLocation(program, 'u_time')
     const routeMode = gl.getUniformLocation(program, 'u_mode')
+    const scroll = gl.getUniformLocation(program, 'u_scroll')
+    const section = gl.getUniformLocation(program, 'u_section')
+    const audio = gl.getUniformLocation(program, 'u_audio')
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
     const pointerPosition = { x: 0.72, y: 0.45 }
+    const audioValues = [0, 0, 0]
+    let scrollTarget = 0
+    let scrollCurrent = 0
+    let sectionCurrent = 0
+    let modeCurrent = modeTarget.current
     let animationFrame = 0
     let startedAt = performance.now()
     let visible = !document.hidden
@@ -198,20 +301,43 @@ export default function ResonanceField() {
 
     const render = (now: number) => {
       resize()
+
+      if (!reducedMotion.matches) {
+        scrollCurrent += (scrollTarget - scrollCurrent) * 0.075
+        sectionCurrent += (sectionTarget.current - sectionCurrent) * 0.055
+        modeCurrent += (modeTarget.current - modeCurrent) * 0.045
+        const nextAudio = readAudioBands(audioController.current)
+        audioValues[0] += (nextAudio[0] - audioValues[0]) * 0.11
+        audioValues[1] += (nextAudio[1] - audioValues[1]) * 0.09
+        audioValues[2] += (nextAudio[2] - audioValues[2]) * 0.075
+      } else {
+        scrollCurrent = 0
+        sectionCurrent = 0
+        modeCurrent = modeTarget.current
+        audioValues.fill(0)
+      }
+
       gl.useProgram(program)
       gl.uniform2f(resolution, canvas.width, canvas.height)
       gl.uniform2f(pointer, pointerPosition.x, pointerPosition.y)
       gl.uniform1f(time, (now - startedAt) / 1000)
-      gl.uniform1f(routeMode, mode)
+      gl.uniform1f(routeMode, modeCurrent)
+      gl.uniform1f(scroll, scrollCurrent)
+      gl.uniform1f(section, sectionCurrent)
+      gl.uniform3f(audio, audioValues[0], audioValues[1], audioValues[2])
       gl.drawArrays(gl.TRIANGLES, 0, 3)
 
-      if (!reducedMotion.matches && visible) {
-        animationFrame = requestAnimationFrame(render)
-      }
+      if (!reducedMotion.matches && visible) animationFrame = requestAnimationFrame(render)
+    }
+
+    const updateScrollProgress = () => {
+      if (reducedMotion.matches) return
+      const scrollable = Math.max(1, document.documentElement.scrollHeight - window.innerHeight)
+      scrollTarget = Math.min(1, Math.max(0, window.scrollY / scrollable))
     }
 
     const handlePointer = (event: PointerEvent) => {
-      if (event.pointerType !== 'mouse') return
+      if (event.pointerType !== 'mouse' || reducedMotion.matches) return
       pointerPosition.x = event.clientX / window.innerWidth
       pointerPosition.y = 1 - event.clientY / window.innerHeight
     }
@@ -229,21 +355,35 @@ export default function ResonanceField() {
 
     const handleMotionPreference = () => {
       cancelAnimationFrame(animationFrame)
-      render(performance.now())
+      if (reducedMotion.matches) {
+        render(performance.now())
+      } else if (visible) {
+        updateScrollProgress()
+        startedAt = performance.now()
+        animationFrame = requestAnimationFrame(render)
+      }
     }
 
     const observer = new ResizeObserver(resize)
     observer.observe(canvas)
+    window.addEventListener('scroll', updateScrollProgress, { passive: true })
     window.addEventListener('pointermove', handlePointer, { passive: true })
     document.addEventListener('visibilitychange', handleVisibility)
     reducedMotion.addEventListener('change', handleMotionPreference)
 
     canvas.dataset.rendering = 'webgl'
+    updateScrollProgress()
+    const renderStatic = () => {
+      if (reducedMotion.matches) render(performance.now())
+    }
+    renderStaticFrame.current = renderStatic
     render(performance.now())
 
     return () => {
       cancelAnimationFrame(animationFrame)
       observer.disconnect()
+      if (renderStaticFrame.current === renderStatic) renderStaticFrame.current = null
+      window.removeEventListener('scroll', updateScrollProgress)
       window.removeEventListener('pointermove', handlePointer)
       document.removeEventListener('visibilitychange', handleVisibility)
       reducedMotion.removeEventListener('change', handleMotionPreference)
@@ -252,12 +392,93 @@ export default function ResonanceField() {
       gl.deleteShader(fragment)
       gl.deleteProgram(program)
     }
-  }, [mode])
+  }, [])
+
+  async function toggleSonicLayer() {
+    if (sonicState === 'starting') return
+
+    if (audioController.current) {
+      audioGeneration.current += 1
+      const controller = audioController.current
+      audioController.current = null
+      setSonicState('off')
+      await controller.stop()
+      return
+    }
+
+    setSonicState('starting')
+    const generation = audioGeneration.current + 1
+    audioGeneration.current = generation
+    let controller: SonicLayerController | null = null
+    try {
+      controller = await createSonicLayer()
+      if (!isMounted.current || generation !== audioGeneration.current) {
+        await controller.stop()
+        return
+      }
+      audioController.current = controller
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const shouldSuspend = document.hidden
+        await (shouldSuspend ? controller.suspend() : controller.resume())
+        if (!isMounted.current || generation !== audioGeneration.current) {
+          if (audioController.current === controller) audioController.current = null
+          await controller.stop()
+          return
+        }
+        if (document.hidden === shouldSuspend) break
+      }
+      setSonicState('on')
+    } catch {
+      if (controller) {
+        if (audioController.current === controller) audioController.current = null
+        try {
+          await controller.stop()
+        } catch {
+          // The graph is already unusable; preserve the UI's unavailable state.
+        }
+      }
+      if (isMounted.current && generation === audioGeneration.current) {
+        setSonicState('error')
+      }
+    }
+  }
+
+  const isOn = sonicState === 'on'
+  const status = sonicState === 'starting' ? 'Starting' : sonicState === 'error' ? 'Unavailable' : isOn ? 'On' : 'Off'
+  const announcement = sonicState === 'error'
+    ? 'The Sonic Layer is unavailable in this browser.'
+    : isOn
+      ? `Sonic Layer on. Playing ${SONIC_LAYER_TITLE}.`
+      : 'Sonic Layer off.'
 
   return (
-    <div className="resonance-field" aria-hidden="true">
-      <canvas ref={canvasRef} />
-      <div className="resonance-field__fallback" />
-    </div>
+    <>
+      <div className="resonance-field" aria-hidden="true">
+        <canvas ref={canvasRef} />
+        <div className="resonance-field__fallback" />
+      </div>
+      <div className="sonic-layer">
+        <button
+          type="button"
+          className="sonic-layer__control"
+          aria-label={`${isOn ? 'Turn off' : 'Turn on'} the Sonic Layer: ${SONIC_LAYER_TITLE}`}
+          title={`${SONIC_LAYER_TITLE} — ${isOn ? 'turn off' : 'turn on'} Sonic Layer`}
+          aria-pressed={isOn}
+          disabled={sonicState === 'starting'}
+          onClick={() => void toggleSonicLayer()}
+        >
+          <span className="sonic-layer__signal" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+          <span>Sonic layer</span>
+          <span className="sonic-layer__state">{status}</span>
+        </button>
+        <span className="sonic-layer__announcement" role="status" aria-live="polite">
+          {announcement}
+        </span>
+      </div>
+    </>
   )
 }

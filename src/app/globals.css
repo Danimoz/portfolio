@@ -27,6 +27,11 @@
   --section-space: clamp(5.5rem, 11vw, 10rem);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --z-field: 0;
+  --z-content: 10;
+  --z-header: 30;
+  --z-sonic-layer: 40;
+  --z-skip-link: 60;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -120,12 +125,12 @@ main,
 .site-footer,
 .site-header {
   position: relative;
-  z-index: 10;
+  z-index: var(--z-content);
 }
 
 .skip-link {
   position: fixed;
-  z-index: 60;
+  z-index: var(--z-skip-link);
   top: 0.75rem;
   left: 0.75rem;
   transform: translateY(-180%);
@@ -143,7 +148,7 @@ main,
 
 .resonance-field {
   position: fixed;
-  z-index: 0;
+  z-index: var(--z-field);
   inset: 0;
   pointer-events: none;
   opacity: var(--field-opacity);
@@ -156,6 +161,103 @@ main,
   inset: 0;
   width: 100%;
   height: 100%;
+}
+
+.sonic-layer {
+  position: fixed;
+  z-index: var(--z-sonic-layer);
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.sonic-layer__control {
+  display: flex;
+  min-height: 2.75rem;
+  padding: 0.48rem 0.62rem 0.48rem 0.72rem;
+  border: 1px solid var(--line);
+  border-radius: var(--control-radius);
+  align-items: center;
+  gap: 0.62rem;
+  background: var(--surface-solid);
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 680;
+  cursor: pointer;
+  transition:
+    transform 140ms var(--ease-out),
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.sonic-layer__control:active {
+  transform: scale(0.97);
+}
+
+.sonic-layer__control:disabled {
+  opacity: 0.58;
+  cursor: wait;
+}
+
+.sonic-layer__signal {
+  display: flex;
+  width: 0.82rem;
+  height: 0.78rem;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.sonic-layer__signal span {
+  width: 0.13rem;
+  border-radius: var(--control-radius);
+  background: var(--ink-soft);
+  transform-origin: bottom;
+  transition:
+    transform 180ms var(--ease-out),
+    background-color 180ms ease;
+}
+
+.sonic-layer__signal span:nth-child(1) {
+  height: 46%;
+}
+
+.sonic-layer__signal span:nth-child(2) {
+  height: 100%;
+}
+
+.sonic-layer__signal span:nth-child(3) {
+  height: 68%;
+}
+
+.sonic-layer__control[aria-pressed='true'] .sonic-layer__signal span {
+  background: var(--accent);
+}
+
+.sonic-layer__control[aria-pressed='true'] .sonic-layer__signal span:nth-child(1) {
+  transform: scaleY(1.7);
+}
+
+.sonic-layer__control[aria-pressed='true'] .sonic-layer__signal span:nth-child(2) {
+  transform: scaleY(0.62);
+}
+
+.sonic-layer__control[aria-pressed='true'] .sonic-layer__signal span:nth-child(3) {
+  transform: scaleY(1.25);
+}
+
+.sonic-layer__state {
+  padding-inline-start: 0.62rem;
+  border-inline-start: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-weight: 560;
+}
+
+.sonic-layer__announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .resonance-field canvas[data-rendering='webgl']+.resonance-field__fallback {
@@ -174,7 +276,7 @@ main,
 
 .site-header {
   position: sticky;
-  z-index: 30;
+  z-index: var(--z-header);
   top: 0;
   border-bottom: 1px solid var(--line);
   background: var(--header);
@@ -1442,6 +1544,13 @@ main,
   }
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .sonic-layer__control:hover {
+    border-color: var(--accent);
+    background: color-mix(in oklch, var(--surface-solid) 88%, var(--accent));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -1464,9 +1573,11 @@ main,
   .mode-story__media img,
   .mode-story:hover .mode-story__media img,
   .project-entry__image img,
-  .project-entry__image:hover img {
+  .project-entry__image:hover img,
+  .sonic-layer__control,
+  .sonic-layer__signal span {
     transform: none;
-    transition-property: opacity, color, background-color, border-color, filter;
+    transition: none;
   }
 
   ::view-transition-old(root),
