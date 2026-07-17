@@ -46,10 +46,9 @@ export default async function MusicCatalog({
         <section className="composition-index" aria-label="Compositions">
           {compositions.map((composition) => (
             <Link
-              className="composition-entry reveal"
+              className="composition-entry"
               href={`/music-catalog/${composition._id}`}
               key={composition._id}
-              suppressHydrationWarning
             >
               <div>
                 <h2>{composition.title}</h2>
