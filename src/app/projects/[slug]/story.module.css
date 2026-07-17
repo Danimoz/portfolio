@@ -90,17 +90,19 @@
 }
 
 .richStory {
-  width: min(100%, 72rem);
-  margin: clamp(4rem, 10vw, 9rem) auto 0;
+  width: 100%;
+  margin: clamp(4rem, 10vw, 9rem) 0 0;
   color: var(--ink-soft);
   font-size: clamp(1.05rem, 1.4vw, 1.22rem);
   line-height: 1.82;
 }
 
 .richStory > * {
-  max-width: 68ch;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
   margin-right: auto;
-  margin-left: auto;
+  margin-left: 0;
 }
 
 .richStory > * + * {
@@ -116,7 +118,6 @@
 }
 
 .richStory h2 {
-  max-width: 24ch;
   margin-top: clamp(5rem, 10vw, 9rem);
   font-size: clamp(2.2rem, 5vw, 4.7rem);
 }
@@ -133,24 +134,44 @@
 .richStory ul,
 .richStory ol {
   display: grid;
-  padding-left: 1.4rem;
+  padding-inline-start: 0;
   gap: 0.6rem;
+  list-style: none;
 }
 
-.richStory ul {
-  list-style: disc;
+.richStory li {
+  position: relative;
+  padding-inline-start: 1.4rem;
 }
 
 .richStory ol {
-  list-style: decimal;
+  counter-reset: story-list-item;
 }
 
-.richStory ul ul {
-  list-style: circle;
+.richStory ol > li {
+  padding-inline-start: 2rem;
+  counter-increment: story-list-item;
 }
 
-.richStory li::marker {
+.richStory ul > li::before,
+.richStory ol > li::before {
+  position: absolute;
+  inset-inline-start: 0;
   color: var(--accent);
+}
+
+.richStory ul > li::before {
+  content: "\2022";
+}
+
+.richStory ul ul > li::before {
+  content: "\25E6";
+}
+
+.richStory ol > li::before {
+  content: counter(story-list-item) ".";
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
 }
 
 .richStory li p {
@@ -171,12 +192,11 @@
 
 .richStory img {
   display: block;
-  width: min(100%, 90rem);
+  width: 100%;
   max-width: none;
   height: auto;
-  margin: clamp(3rem, 8vw, 7rem) 50%;
+  margin: clamp(3rem, 8vw, 7rem) 0;
   border-radius: var(--media-radius);
-  transform: translateX(-50%);
 }
 
 .richStory pre {

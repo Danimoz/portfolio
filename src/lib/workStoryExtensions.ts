@@ -5,6 +5,8 @@ import StarterKit from '@tiptap/starter-kit'
 export const workStoryExtensions = [
   StarterKit.configure({
     heading: { levels: [2, 3] },
+    bulletList: { HTMLAttributes: { role: 'list' } },
+    orderedList: { HTMLAttributes: { role: 'list' } },
     link: false,
   }),
   Link.configure({
