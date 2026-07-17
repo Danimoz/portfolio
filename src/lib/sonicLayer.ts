@@ -1,6 +1,6 @@
-export const SONIC_LAYER_TITLE = 'Domitila — Flow 1'
+export const SONIC_LAYER_TITLE = 'Domitila'
 
-const SONIC_LAYER_SOURCE = '/audio/DOMITILA%20-%20Flow%201.mp3'
+const SONIC_LAYER_SOURCE = '/audio/domitila.mp3'
 
 export type SonicLayerController = {
   analyser: AnalyserNode

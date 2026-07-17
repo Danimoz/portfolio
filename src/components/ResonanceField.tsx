@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import {
   createSonicLayer,
   SONIC_LAYER_TITLE,
@@ -110,7 +110,7 @@ void main() {
   vec3 color = ink;
   color += modeTint * fbm(uv * 0.72 + vec2(time * 0.08, -time * 0.04) + u_scroll * 0.3) * (0.12 + audioEnergy * 0.08);
   color += mix(cyan, silver, clamp(energy * 0.13 + u_audio.z * 0.18, 0.0, 0.7)) * filaments * vignette;
-  color += audioTint * audioEnergy * 0.42 * vignette;
+  color += audioTint * audioEnergy * (0.42 - u_section * 0.16) * vignette;
   color += grain * 0.012;
 
   outColor = vec4(color, clamp(0.72 + filaments * 0.22 + audioEnergy * 0.04, 0.0, 0.96));
@@ -151,6 +151,31 @@ function readAudioBands(controller: SonicLayerController | null): [number, numbe
   ]
 }
 
+function detectConstrainedDevice() {
+  const navigatorWithHints = navigator as Navigator & {
+    connection?: { saveData?: boolean }
+    deviceMemory?: number
+  }
+
+  return (
+    window.matchMedia('(prefers-reduced-data: reduce)').matches ||
+    navigatorWithHints.connection?.saveData === true ||
+    (navigatorWithHints.deviceMemory !== undefined && navigatorWithHints.deviceMemory <= 4) ||
+    navigator.hardwareConcurrency <= 4
+  )
+}
+
+function subscribeConstrained(onChange: () => void) {
+  const media = window.matchMedia('(prefers-reduced-data: reduce)')
+  const connection = (navigator as Navigator & { connection?: EventTarget }).connection
+  media.addEventListener('change', onChange)
+  connection?.addEventListener?.('change', onChange)
+  return () => {
+    media.removeEventListener('change', onChange)
+    connection?.removeEventListener?.('change', onChange)
+  }
+}
+
 export default function ResonanceField() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const audioController = useRef<SonicLayerController | null>(null)
@@ -162,6 +187,12 @@ export default function ResonanceField() {
   const mode = pathname.startsWith('/music-catalog') ? 1 : 0
   const modeTarget = useRef(mode)
   const [sonicState, setSonicState] = useState<SonicState>('off')
+  const [contextEpoch, setContextEpoch] = useState(0)
+  const isConstrained = useSyncExternalStore(
+    subscribeConstrained,
+    () => detectConstrainedDevice(),
+    () => false,
+  )
 
   useEffect(() => {
     modeTarget.current = mode
@@ -170,25 +201,40 @@ export default function ResonanceField() {
 
   useEffect(() => {
     sectionTarget.current = 0
-    const sections = Array.from(
-      document.querySelectorAll<HTMLElement>('main > section, main > article, main > header'),
-    )
-    const sectionRatios = new Map<Element, number>()
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => sectionRatios.set(entry.target, entry.intersectionRatio))
-      let activeIndex = 0
-      let activeRatio = -1
-      sections.forEach((candidate, index) => {
-        const ratio = sectionRatios.get(candidate) ?? 0
-        if (ratio > activeRatio) {
-          activeRatio = ratio
-          activeIndex = index
-        }
-      })
-      sectionTarget.current = sections.length > 1 ? activeIndex / (sections.length - 1) : 0
-    }, { threshold: [0, 0.2, 0.45, 0.7, 1] })
-    sections.forEach((candidate) => observer.observe(candidate))
-    return () => observer.disconnect()
+    const main = document.querySelector('main')
+    let observer: IntersectionObserver | null = null
+
+    const build = () => {
+      observer?.disconnect()
+      const sections = Array.from(
+        document.querySelectorAll<HTMLElement>('main > section, main > article, main > header'),
+      )
+      if (sections.length === 0) return
+      const sectionRatios = new Map<Element, number>()
+      observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => sectionRatios.set(entry.target, entry.intersectionRatio))
+        let activeIndex = 0
+        let activeRatio = -1
+        sections.forEach((candidate, index) => {
+          const ratio = sectionRatios.get(candidate) ?? 0
+          if (ratio > activeRatio) {
+            activeRatio = ratio
+            activeIndex = index
+          }
+        })
+        sectionTarget.current = sections.length > 1 ? activeIndex / (sections.length - 1) : 0
+      }, { threshold: [0, 0.2, 0.45, 0.7, 1] })
+      sections.forEach((candidate) => observer!.observe(candidate))
+    }
+
+    build()
+    const mutation = main ? new MutationObserver(() => build()) : null
+    mutation?.observe(main as Node, { childList: true })
+
+    return () => {
+      observer?.disconnect()
+      mutation?.disconnect()
+    }
   }, [pathname])
 
   useEffect(() => {
@@ -214,18 +260,7 @@ export default function ResonanceField() {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const reducedData = window.matchMedia('(prefers-reduced-data: reduce)')
-    const navigatorWithHints = navigator as Navigator & {
-      connection?: { saveData?: boolean }
-      deviceMemory?: number
-    }
-    const constrainedDevice =
-      reducedData.matches ||
-      navigatorWithHints.connection?.saveData === true ||
-      (navigatorWithHints.deviceMemory !== undefined && navigatorWithHints.deviceMemory <= 4) ||
-      navigator.hardwareConcurrency <= 4
-
-    if (constrainedDevice) {
+    if (detectConstrainedDevice()) {
       canvas.dataset.rendering = 'fallback'
       return
     }
@@ -337,7 +372,7 @@ export default function ResonanceField() {
     }
 
     const handlePointer = (event: PointerEvent) => {
-      if (event.pointerType !== 'mouse' || reducedMotion.matches) return
+      if (reducedMotion.matches) return
       pointerPosition.x = event.clientX / window.innerWidth
       pointerPosition.y = 1 - event.clientY / window.innerHeight
     }
@@ -364,10 +399,23 @@ export default function ResonanceField() {
       }
     }
 
+    const handleContextLost = (event: Event) => {
+      event.preventDefault()
+      cancelAnimationFrame(animationFrame)
+      canvas.dataset.rendering = 'fallback'
+    }
+
+    const handleContextRestored = () => {
+      setContextEpoch((epoch) => epoch + 1)
+    }
+
     const observer = new ResizeObserver(resize)
     observer.observe(canvas)
+    canvas.addEventListener('webglcontextlost', handleContextLost)
+    canvas.addEventListener('webglcontextrestored', handleContextRestored)
     window.addEventListener('scroll', updateScrollProgress, { passive: true })
     window.addEventListener('pointermove', handlePointer, { passive: true })
+    window.addEventListener('pointerdown', handlePointer, { passive: true })
     document.addEventListener('visibilitychange', handleVisibility)
     reducedMotion.addEventListener('change', handleMotionPreference)
 
@@ -383,8 +431,11 @@ export default function ResonanceField() {
       cancelAnimationFrame(animationFrame)
       observer.disconnect()
       if (renderStaticFrame.current === renderStatic) renderStaticFrame.current = null
+      canvas.removeEventListener('webglcontextlost', handleContextLost)
+      canvas.removeEventListener('webglcontextrestored', handleContextRestored)
       window.removeEventListener('scroll', updateScrollProgress)
       window.removeEventListener('pointermove', handlePointer)
+      window.removeEventListener('pointerdown', handlePointer)
       document.removeEventListener('visibilitychange', handleVisibility)
       reducedMotion.removeEventListener('change', handleMotionPreference)
       gl.deleteBuffer(buffer)
@@ -392,7 +443,7 @@ export default function ResonanceField() {
       gl.deleteShader(fragment)
       gl.deleteProgram(program)
     }
-  }, [])
+  }, [contextEpoch])
 
   async function toggleSonicLayer() {
     if (sonicState === 'starting') return
@@ -457,28 +508,30 @@ export default function ResonanceField() {
         <canvas ref={canvasRef} />
         <div className="resonance-field__fallback" />
       </div>
-      <div className="sonic-layer">
-        <button
-          type="button"
-          className="sonic-layer__control"
-          aria-label={`${isOn ? 'Turn off' : 'Turn on'} the Sonic Layer: ${SONIC_LAYER_TITLE}`}
-          title={`${SONIC_LAYER_TITLE} — ${isOn ? 'turn off' : 'turn on'} Sonic Layer`}
-          aria-pressed={isOn}
-          disabled={sonicState === 'starting'}
-          onClick={() => void toggleSonicLayer()}
-        >
-          <span className="sonic-layer__signal" aria-hidden="true">
-            <span />
-            <span />
-            <span />
+      {!isConstrained && (
+        <div className="sonic-layer">
+          <button
+            type="button"
+            className="sonic-layer__control"
+            aria-label={`${isOn ? 'Turn off' : 'Turn on'} the Sonic Layer: ${SONIC_LAYER_TITLE}`}
+            title={`${SONIC_LAYER_TITLE} — ${isOn ? 'turn off' : 'turn on'} Sonic Layer`}
+            aria-pressed={isOn}
+            disabled={sonicState === 'starting'}
+            onClick={() => void toggleSonicLayer()}
+          >
+            <span className="sonic-layer__signal" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
+            <span>Sonic Layer</span>
+            <span className="sonic-layer__state">{status}</span>
+          </button>
+          <span className="sonic-layer__announcement" role="status" aria-live="polite">
+            {announcement}
           </span>
-          <span>Sonic layer</span>
-          <span className="sonic-layer__state">{status}</span>
-        </button>
-        <span className="sonic-layer__announcement" role="status" aria-live="polite">
-          {announcement}
-        </span>
-      </div>
+        </div>
+      )}
     </>
   )
 }
