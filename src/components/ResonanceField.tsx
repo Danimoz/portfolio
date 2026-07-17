@@ -16,8 +16,11 @@ void main() {
 }
 `
 
-const fragmentShader = `#version 300 es
+const buildFragmentShader = (tier: 'medium' | 'high') => `#version 300 es
 precision highp float;
+
+#define FBM_OCTAVES ${tier === 'high' ? 4 : 3}
+#define FILAMENT_STEPS ${tier === 'high' ? 6 : 4}
 
 uniform vec2 u_resolution;
 uniform vec2 u_pointer;
@@ -47,7 +50,7 @@ float noise(vec2 p) {
 float fbm(vec2 p) {
   float value = 0.0;
   float amplitude = 0.5;
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < FBM_OCTAVES; i++) {
     value += amplitude * noise(p);
     p = p * 2.03 + vec2(17.2, 9.1);
     amplitude *= 0.5;
@@ -76,14 +79,15 @@ void main() {
 
   float filaments = 0.0;
   float energy = 0.0;
-  for (int i = 0; i < 6; i++) {
+  float span = float(FILAMENT_STEPS - 1);
+  for (int i = 0; i < FILAMENT_STEPS; i++) {
     float fi = float(i);
-    float frequency = mix(4.0, 13.0, fi / 5.0) * mix(0.92, 1.12, u_scroll);
+    float frequency = mix(4.0, 13.0, fi / span) * mix(0.92, 1.12, u_scroll);
     float phase = time * (0.32 + fi * 0.035) + fi * 1.37 + u_scroll * (1.1 + fi * 0.22) + u_section * 1.8;
     float standing = sin(drift.x * frequency + phase) * cos(drift.y * (frequency * 0.72) - phase * 0.63);
-    float threshold = mix(-0.32, 0.42, fi / 5.0) + sin(u_scroll * 6.283 + fi) * 0.045;
+    float threshold = mix(-0.32, 0.42, fi / span) + sin(u_scroll * 6.283 + fi) * 0.045;
     float contour = abs(standing - threshold);
-    float line = exp(-contour * mix(24.0, 52.0, fi / 5.0));
+    float line = exp(-contour * mix(24.0, 52.0, fi / span));
     filaments += line * (0.18 + fi * 0.025) * (1.0 + audioEnergy * 0.7);
     energy += line;
   }
@@ -163,6 +167,15 @@ function detectConstrainedDevice() {
     (navigatorWithHints.deviceMemory !== undefined && navigatorWithHints.deviceMemory <= 4) ||
     navigator.hardwareConcurrency <= 4
   )
+}
+
+type QualityTier = 'fallback' | 'medium' | 'high'
+
+function detectQualityTier(): QualityTier {
+  if (detectConstrainedDevice()) return 'fallback'
+  // Capable but modest devices (<= 8 logical cores) run a lighter shader;
+  // high-core desktops get the full-quality field.
+  return (navigator.hardwareConcurrency || 8) <= 8 ? 'medium' : 'high'
 }
 
 function subscribeConstrained(onChange: () => void) {
@@ -260,10 +273,13 @@ export default function ResonanceField() {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    if (detectConstrainedDevice()) {
+    const tier = detectQualityTier()
+    if (tier === 'fallback') {
       canvas.dataset.rendering = 'fallback'
       return
     }
+
+    const dprCap = tier === 'high' ? 1.5 : 1.25
 
     const gl = canvas.getContext('webgl2', {
       alpha: true,
@@ -277,7 +293,7 @@ export default function ResonanceField() {
     }
 
     const vertex = compileShader(gl, gl.VERTEX_SHADER, vertexShader)
-    const fragment = compileShader(gl, gl.FRAGMENT_SHADER, fragmentShader)
+    const fragment = compileShader(gl, gl.FRAGMENT_SHADER, buildFragmentShader(tier))
     const program = gl.createProgram()
 
     if (!vertex || !fragment || !program) {
@@ -323,7 +339,7 @@ export default function ResonanceField() {
     let visible = !document.hidden
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
+      const dpr = Math.min(window.devicePixelRatio || 1, dprCap)
       const width = Math.max(1, Math.floor(canvas.clientWidth * dpr))
       const height = Math.max(1, Math.floor(canvas.clientHeight * dpr))
 
@@ -420,6 +436,7 @@ export default function ResonanceField() {
     reducedMotion.addEventListener('change', handleMotionPreference)
 
     canvas.dataset.rendering = 'webgl'
+    canvas.dataset.quality = tier
     updateScrollProgress()
     const renderStatic = () => {
       if (reducedMotion.matches) render(performance.now())
