@@ -1,67 +1,65 @@
-'use client';
+'use client'
 
-import { SubmitButton } from "@/components/SubmitButton";
-import { addComposition } from "@/lib/actions";
-import { ICategory } from "@/types";
-import toast from "react-hot-toast";
+import { SubmitButton } from '@/components/SubmitButton'
+import { addComposition } from '@/lib/actions'
+import type { ICategory } from '@/types'
+import { notifyActionResult } from './notifyActionResult'
 
-interface CompositionFormProps {
-  categories: string;
-}
-
-export default function CompositionForm({ categories }: CompositionFormProps) {
+export default function CompositionForm({ categories }: { categories: ICategory[] }) {
   async function action(formData: FormData) {
-    const result = await addComposition(formData);
-    if (result?.status === 201) {
-      toast.success('Composition added succesfully');
-    } else if (result?.status === 400) {
-      toast.error('Error creating composition');
-    }
+    const result = await addComposition(formData)
+    notifyActionResult(result, {
+      success: 'Composition added.',
+      error: 'The composition could not be added.',
+    })
   }
 
-  const categoriesArray: ICategory[] = JSON.parse(categories);
-
   return (
-    <form action={action}>
-      <h2 className="text-4xl font-bold my-6">Add Composition</h2>
-      <div>
-        <label htmlFor="title" className="block mb-1">Title:</label>
-        <input type="text" id="title" name="title" className="p-3 w-full text-gray-950 rounded mb-4" required />
+    <form action={action} className="console-form console-form--wide">
+      <h2>Add composition</h2>
+      <div className="console-form__columns">
+        <div className="field-group">
+          <label htmlFor="composition-title">Title</label>
+          <input type="text" id="composition-title" name="title" required />
+        </div>
+        <div className="field-group">
+          <label htmlFor="composition-duration">Duration</label>
+          <input type="text" id="composition-duration" name="duration" required />
+        </div>
+        <div className="field-group">
+          <label htmlFor="composition-year">Year composed</label>
+          <input type="text" id="composition-year" name="yearOfComposition" required />
+        </div>
+        <div className="field-group">
+          <label htmlFor="composition-instrumentation">Instrumentation</label>
+          <input type="text" id="composition-instrumentation" name="instrumentation" required />
+        </div>
       </div>
-      <div>
-        <label htmlFor="duration" className="block mb-1">Duration:</label>
-        <input type="text" id="duration" name="duration" className="p-3 w-full text-gray-950 rounded mb-4" required />
+      <div className="field-group">
+        <label htmlFor="composer-note">Note from the composer</label>
+        <textarea id="composer-note" name="noteFromComposer" rows={6} />
       </div>
-      <div>
-        <label htmlFor="yearOfComposition" className="block mb-1">Year Of Composition:</label>
-        <input type="text" id="yearOfComposition" name="yearOfComposition" className="p-3 w-full text-gray-950 rounded mb-4" required />
+      <div className="field-group">
+        <label htmlFor="composition-text">Text</label>
+        <textarea id="composition-text" name="compositionText" rows={6} />
       </div>
-      <div>
-        <label htmlFor="instrumentation" className="block mb-1">Instrumentation:</label>
-        <input type="text" id="instrumentation" name="instrumentation" placeholder='SATB AND PIANO' className="p-3 text-gray-950 w-full rounded mb-4"required />
+      <div className="field-group">
+        <label htmlFor="composition-youtube">YouTube embed links</label>
+        <input type="text" id="composition-youtube" name="youtubeLinks" />
+        <p>Separate multiple links with commas.</p>
       </div>
-      <div>
-        <label htmlFor="noteFromComposer" className="block mb-1">Note From Composer:</label>
-        <textarea id="noteFromComposer" name="noteFromComposer" rows={4} cols={50} className="p-3 w-full text-gray-950 rounded mb-4" />
-      </div>
-      <div>
-        <label htmlFor="compositionText" className="block mb-1">Text:</label>
-        <textarea id="compositionText" name="compositionText" rows={4} cols={60} className="p-3 w-full text-gray-950 rounded mb-4" />
-      </div>
-      <div>
-        <label htmlFor="youtubeLinks" className="block mb-1">YouTube Links:</label>
-        <input type="text" id="youtubeLinks" name="youtubeLinks" placeholder='Links separated by comma' className="p-3 text-gray-950 w-full rounded mb-4" />
-      </div>
-      <div>
-        <label htmlFor="categories" className="block mb-1">Categories:</label>
-        <select id="categories" name="categories" className="p-3 w-full text-gray-950 rounded mb-4" multiple required>
-          {categoriesArray.map((category: ICategory) => (
-            <option key={category._id} value={category._id}>{category.name}</option>
+      <div className="field-group">
+        <label htmlFor="composition-categories">Categories</label>
+        <select id="composition-categories" name="categories" multiple required>
+          {categories.map((category) => (
+            <option key={category._id} value={category._id}>
+              {category.name}
+            </option>
           ))}
         </select>
+        <p>Use Control or Command to select more than one.</p>
       </div>
-
-      <SubmitButton buttonText="Add Composition" />
+      <SubmitButton buttonText="Add composition" />
     </form>
   )
 }

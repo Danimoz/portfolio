@@ -1,17 +1,18 @@
 'use client'
- 
+
 import { useFormStatus } from 'react-dom'
- 
+
 interface SubmitButtonProps {
-  buttonText: string;
+  buttonText: string
+  pendingText?: string
 }
 
-export function SubmitButton({ buttonText }: SubmitButtonProps) {
+export function SubmitButton({ buttonText, pendingText = 'Saving' }: SubmitButtonProps) {
   const { pending } = useFormStatus()
- 
+
   return (
-    <button type="submit" aria-disabled={pending} className='px-6 py-4 rounded-xl bg-white text-blue-600 text-xl'>
-      {pending? 'Loading ....' : buttonText}
+    <button type="submit" className="button button--primary" aria-disabled={pending} disabled={pending}>
+      {pending ? pendingText : buttonText}
     </button>
   )
 }

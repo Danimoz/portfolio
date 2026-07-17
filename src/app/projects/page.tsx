@@ -1,52 +1,61 @@
-import { getProjects } from "@/lib/actions"
-import { getMultipleBase64, separateStringWithCommas } from "@/lib/utils";
-import Image from "next/image";
-import Link from "next/link";
-import { Metadata } from "next";
+import type { Metadata } from 'next'
+import Image from 'next/image'
+import Link from 'next/link'
+import PageIntro from '@/components/PageIntro'
+import { getProjects } from '@/lib/actions'
+import { separateStringWithCommas } from '@/lib/utils'
 
 export const metadata: Metadata = {
-  title: 'Daniel Azubuine Portfolio',
-  description: 'Software Projects done by Daniel Azubuine'
+  title: 'Software Projects',
+  description: 'Selected software projects by Daniel Azubuine.',
 }
 
-
 export default async function Projects() {
-  const projects = await getProjects();
-  const blurredURLs = await getMultipleBase64(projects.data)
-  
-  return (
-    <main className="container mx-auto px-4 min-h-screen">
-      <section className="my-4">
-        <h1 className="mt-8 text-4xl font-bold relative">
-          My work
-          <span className="absolute w-[100px] h-2 bg-blue-600 -bottom-4 left-0" />
-        </h1>
-      </section>
+  const { data: projects } = await getProjects()
 
-      <section className="py-9 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {projects.data?.map((project, index) => (
-          <Link href={project.link} key={project.name} className="hover:shadow-2xl flex flex-col h-full">
-            <Image 
-              src={project.image} 
-              alt={project.name}
-              placeholder="blur"
-              blurDataURL={blurredURLs[index].blurredImage} 
-              width={1120} 
-              height={240} 
-              className="w-full h-60 rounded-tl-2xl rounded-tr-2xl transform brightness-90 transition hover:brightness-110" 
-              style={{ transform: "translate3d(0, 0, 0)" }}
-            />
-            <div className="bg-white dark:bg-zinc-900 py-4 px-6 border-b-4 border-slate-500 flex-1 mt-6">
-              <h2 className="uppercase text-xl font-bold py-4">{project.name}</h2>
-              <p className="text-base">{project.description}</p>
-              <p className="text-base my-3">{project.role}</p>
-              {separateStringWithCommas(project.tech).map((tech) => (
-                <span className="inline-block bg-gray-100 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mt-2" key={tech}>{tech}</span>
-              ))}
-            </div>
-          </Link>
-        ))}
-      </section>
+  return (
+    <main id="main-content" className="page-shell">
+      <PageIntro
+        label="Software Mode"
+        title="Software shaped around real problems."
+        description="Selected products and engineering work, with the role, tools, and decisions behind each result."
+      />
+
+      {projects.length ? (
+        <section className="project-grid" aria-label="Selected software projects">
+          {projects.map((project) => (
+            <article className="project-entry reveal" key={project.name}>
+              <Link className="project-entry__image" href={project.link} aria-label={`View ${project.name}`}>
+                <Image
+                  src={project.image}
+                  alt={`Preview of ${project.name}`}
+                  width={1200}
+                  height={820}
+                  sizes="(max-width: 767px) 100vw, 50vw"
+                />
+              </Link>
+              <div className="project-entry__copy">
+                <div>
+                  <h2>{project.name}</h2>
+                  <p>{project.role}</p>
+                </div>
+                <p>{project.description}</p>
+                <div className="tag-list" aria-label="Technologies used">
+                  {separateStringWithCommas(project.tech).map((tech) => (
+                    <span key={tech}>{tech}</span>
+                  ))}
+                </div>
+                <Link href={project.link}>View project</Link>
+              </div>
+            </article>
+          ))}
+        </section>
+      ) : (
+        <section className="empty-state">
+          <h2>Project stories are being prepared.</h2>
+          <p>The new software archive will pair each result with the problem, process, and evidence behind it.</p>
+        </section>
+      )}
     </main>
   )
 }

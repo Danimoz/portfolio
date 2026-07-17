@@ -1,76 +1,82 @@
-import { getSingleComposition } from "@/lib/actions";
-import { separateStringWithCommas } from "@/lib/utils";
-import type { Metadata, ResolvingMetadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { getSingleComposition } from '@/lib/actions'
+import { separateStringWithCommas } from '@/lib/utils'
 
 type Props = {
-  params: { id: string }
-  searchParams: { [key: string]: string | string[] | undefined }
+  params: Promise<{ id: string }>
 }
 
-export async function generateMetadata({ params, searchParams }: Props, parent: ResolvingMetadata): Promise<Metadata> {
-  const id = params.id
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params
   const { data } = await getSingleComposition(id)
- 
   return {
-    title: data?.title + ' - Daniel Azubuine',
+    title: data?.title ?? 'Composition',
+    description: data
+      ? `${data.title}, a composition by Daniel Azubuine for ${data.instrumentation}.`
+      : 'A composition by Daniel Azubuine.',
   }
 }
 
+export default async function SingleComposition({ params }: Props) {
+  const { id } = await params
+  const { data: composition, status } = await getSingleComposition(id)
+  if (status === 404 || !composition) notFound()
 
-export default async function SingleComposition({ params: { id } }: { params: { id: string }}){
-  const { data: composition, status } = await getSingleComposition(id);
-  if(status === 404) return notFound();
+  const recordings = composition.youtubeLinks
+    ? separateStringWithCommas(composition.youtubeLinks).filter(Boolean)
+    : []
 
   return (
-    <main className="container min-h-screen mx-auto px-6 md:px-0">
-      <section className="my-4 flex flex-col md:flex-row gap-y-6 items-center">
-        <h1 className="my-8 text-4xl font-bold relative">
-          {composition?.title}
-          <span className="absolute w-[100px] h-2 bg-blue-600 -bottom-4 left-0" />
-        </h1>
-        <div className="ml-auto hover:scale-110">
-          <Link href='/music-catalog' className='uppercase text-xl px-6 py-3 border-2 border-slate-500 rounded-xl'>Browse Catalog</Link>
-        </div>
-      </section>
+    <main id="main-content" className="page-shell composition-page">
+      <header className="composition-hero">
+        <Link href="/music-catalog">Back to the catalog</Link>
+        <h1>{composition.title}</h1>
+        <p>{composition.instrumentation}</p>
+        <dl>
+          <div>
+            <dt>Year</dt>
+            <dd>{composition.yearOfComposition}</dd>
+          </div>
+          <div>
+            <dt>Duration</dt>
+            <dd>{composition.duration}</dd>
+          </div>
+        </dl>
+      </header>
 
-      <section className="my-4">
-        <div className="mt-8">
-          <p className="text-lg uppercase">{composition?.instrumentation}</p>
-          <h2 className="uppercase text-xl font-bold my-4">Note from Composer</h2>
-          <p className="text-lg">{composition?.noteFromComposer}</p>
-        </div>
-        <div className="my-4">
-          {composition?.youtubeLinks && separateStringWithCommas(composition?.youtubeLinks as string).map((link) => (
-            <iframe
-              key={link} 
-              width="560" 
-              height="505"
-              className="w-full" 
-              src={link + '?autoplay=1'}
-              title="YouTube video player" 
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-              allowFullScreen={true} 
-            />
-          ))}
-        </div>
-        <div>
-          {composition?.compositionText && (
-            <>
-              <h2 className="uppercase text-xl font-bold my-4">The text</h2>
-              <p className="text-lg whitespace-pre-line">{composition?.compositionText}</p>
-            </>
-          )}
-          
-          <h2 className="uppercase text-xl font-bold my-4">Duration</h2>
-          <p className="text-lg">{composition?.duration}</p>
+      {composition.noteFromComposer ? (
+        <section className="composition-note reveal">
+          <h2>From the composer</h2>
+          <p>{composition.noteFromComposer}</p>
+        </section>
+      ) : null}
 
-          <h2 className="uppercase text-xl font-bold my-4">Year Of Composition</h2>
-          <p className="text-lg">{composition?.yearOfComposition}</p>
+      {recordings.length ? (
+        <section className="recordings reveal" aria-labelledby="recordings-heading">
+          <h2 id="recordings-heading">Listen</h2>
+          <div className="recordings__grid">
+            {recordings.map((link, index) => (
+              <iframe
+                key={link}
+                src={link}
+                title={`${composition.title} recording ${index + 1}`}
+                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                loading="lazy"
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
-        </div>
-      </section>
+      {composition.compositionText ? (
+        <section className="composition-text reveal">
+          <h2>Text</h2>
+          <p>{composition.compositionText}</p>
+        </section>
+      ) : null}
     </main>
   )
 }

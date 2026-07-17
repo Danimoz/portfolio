@@ -1,44 +1,72 @@
-import { getCategories, getCompositions } from "@/lib/actions";
-import Link from "next/link";
-import CompositionSearch from "./search";
-import CompositionCategories from "./categories";
-import { Metadata } from "next";
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import PageIntro from '@/components/PageIntro'
+import { getCategories, getCompositions } from '@/lib/actions'
+import CompositionCategories from './categories'
+import CompositionSearch from './search'
 
 export const metadata: Metadata = {
-  title: 'Daniel Azubuine Music Catalog',
-  description: 'Works composed by Daniel Azubuine, Daniel Azubuine songs'
+  title: 'Music Catalog',
+  description: 'Compositions and musical works by Daniel Azubuine.',
 }
 
-export default async function MusicCatalog({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined}}){
-  const search = typeof searchParams.search === 'string' ? searchParams.search : undefined;
-  const category = typeof searchParams.category === 'string' ? searchParams.category : undefined;
+export default async function MusicCatalog({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const resolvedSearchParams = await searchParams
+  const search =
+    typeof resolvedSearchParams.search === 'string' ? resolvedSearchParams.search : undefined
+  const category =
+    typeof resolvedSearchParams.category === 'string' ? resolvedSearchParams.category : undefined
+  const [{ data: compositions }, { data: categories }] = await Promise.all([
+    getCompositions(search, category),
+    getCategories(),
+  ])
+  const serializedCategories = categories.map((item) => ({
+    _id: item._id.toString(),
+    name: item.name,
+  }))
 
-  const { data: compositions } = await getCompositions(search, category);
-  const { data: categories } = await getCategories();
-  
   return (
-    <main className="container mx-auto px-4 md:px-0 min-h-screen">
-      <section className="my-4">
-        <h1 className="my-8 text-4xl font-bold relative">
-          Music Catalog
-          <span className="absolute w-[100px] h-2 bg-blue-600 -bottom-4 left-0" />
-        </h1>
+    <main id="main-content" className="page-shell">
+      <PageIntro
+        label="Music Mode"
+        title="Works for voices, instruments, and attention."
+        description="Browse compositions by title or category, then enter each work for its notes, text, instrumentation, and recordings."
+      />
+
+      <section className="catalog-tools" aria-label="Catalog filters">
+        <CompositionSearch search={search} />
+        <CompositionCategories categories={serializedCategories} />
       </section>
 
-      <section className="my-4">
-        <CompositionSearch search={search} />
-
-        <CompositionCategories categories={JSON.stringify(categories)} />
-
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4'>
-          {compositions?.map((composition) => (
-            <Link href={`/music-catalog/${composition._id}`} key={composition._id} className="rounded-xl bg-white text-blue-600 px-6 py-3 hover:scale-105">
-              <h2>{composition.title}</h2> 
+      {compositions.length ? (
+        <section className="composition-index" aria-label="Compositions">
+          {compositions.map((composition) => (
+            <Link
+              className="composition-entry reveal"
+              href={`/music-catalog/${composition._id}`}
+              key={composition._id}
+            >
+              <div>
+                <h2>{composition.title}</h2>
+                <p>{composition.instrumentation}</p>
+              </div>
+              <div>
+                <span>{composition.yearOfComposition}</span>
+                <span>{composition.duration}</span>
+              </div>
             </Link>
           ))}
-        </div>
-      </section>
-
+        </section>
+      ) : (
+        <section className="empty-state">
+          <h2>No works match this view.</h2>
+          <p>Clear the search or choose another category to return to the full catalog.</p>
+        </section>
+      )}
     </main>
   )
 }

@@ -1,31 +1,21 @@
-import Link from "next/link"
-import SocialLinks from "./socialLinks"
-import { FaLinkedin, FaTwitter } from "react-icons/fa"
+import Link from 'next/link'
+import SocialLinks from './socialLinks'
 
-export default function Footer(){
-  const drounzSocialLinks = [
-    { name: 'LinkedIn', link: 'https://linkedin.com/in/Davidegorp', icon: FaLinkedin }, 
-    { name: 'Twitter', link: 'https://twitter.com/d_rounz', icon: FaTwitter }, 
-  ]
-
+export default function Footer() {
   return (
-    <footer className="bg-blue-600 rounded-t-2xl">
-      <div className="container mx-auto py-4 md:py-12">
-        <div className="flex flex-col md:flex-row justify-between items-center">
-          <div className="flex flex-col">
-            <p className="text-xl">Design by Drounz</p>
-            <div className="flex justify-center gap-x-6 mt-2">
-              {drounzSocialLinks.map((link) => (
-                <Link key={link.name} href={link.link} className="bg-white rounded-3xl text-blue-600 text-lg font-bold px-3 py-1 hover:scale-110"><link.icon size={24} /></Link>
-              ))}
-            </div>
-          </div>
-          
-          <div className="mt-4">
-          <p className="text-xl mb-2">Reach out to me:</p>
-          <SocialLinks />
-          </div>
+    <footer className="site-footer">
+      <div className="site-footer__lead">
+        <p>Have a role, score, performance, or product in mind?</p>
+        <Link href="/contact">Start a conversation</Link>
+      </div>
+
+      <div className="site-footer__base">
+        <div>
+          <p>Daniel Azubuine</p>
+          <p>Composer, pianist, and software engineer.</p>
         </div>
+        <SocialLinks />
+        <p>© {new Date().getFullYear()}</p>
       </div>
     </footer>
   )

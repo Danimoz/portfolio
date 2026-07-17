@@ -1,60 +1,64 @@
-'use client';
+'use client'
 
-import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { CiMenuFries } from "react-icons/ci";
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
-const navbarSections = [
-  { name:'Home', link: '/' },
-  { name: 'Projects', link: '/projects' },
-  { name: 'Music Catalog', link: '/music-catalog' },
-  { name: 'Contact', link: '/contact' },
-  { name: 'Blog', link: 'https://dflat.hashnode.dev/' },
+const navigation = [
+  { name: 'Home', href: '/' },
+  { name: 'Software', href: '/projects' },
+  { name: 'Music', href: '/music-catalog' },
+  { name: 'Writing', href: 'https://dflat.hashnode.dev/' },
 ]
 
-export default function Navbar(){
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const navbarRef = useRef<HTMLDivElement>(null)
+function isActiveRoute(pathname: string, href: string) {
+  if (!href.startsWith('/')) return false
+  return href === '/' ? pathname === '/' : pathname.startsWith(href)
+}
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (navbarRef.current && !navbarRef.current.contains(event.target as Node)) setIsMenuOpen(false)
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+export default function Navbar() {
+  const pathname = usePathname()
 
   return (
-    <header className="w-full top-0 sticky z-50">
-      <nav className="h-20 py-3 bg-slate-700 bg-opacity-25">
-        <div className="container mx-auto ">
-          <div className="hidden md:flex space-x-4">
-            {navbarSections.map((section) => (
-              <Link key={section.name} href={section.link} className="p-3">{section.name}</Link>
-            ))}
-          </div>
+    <header className="site-header">
+      <nav className="site-nav" aria-label="Primary navigation">
+        <Link href="/" className="site-nav__brand">
+          <span aria-hidden="true">DA</span>
+          <span>Daniel Azubuine</span>
+        </Link>
 
-          <div className="md:hidden">
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="mx-6">
-              <CiMenuFries size={40} color='white' />
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      <div ref={navbarRef} className={isMenuOpen ? 'w-full px-8 fixed top-16 bg-gray-950 text-slate-200' : 'hidden'}>
-        {navbarSections.map((section) => (
-          <Link 
-            key={section.name} 
-            href={section.link} 
-            className="block w-full p-2"
-            onClick={() => isMenuOpen && setIsMenuOpen(false)}
-          >
-            {section.name}
+        <div className="site-nav__links">
+          {navigation.map((item) => {
+            const active = isActiveRoute(pathname, item.href)
+            return (
+              <Link key={item.name} href={item.href} aria-current={active ? 'page' : undefined}>
+                {item.name}
+              </Link>
+            )
+          })}
+          <Link className="button button--quiet" href="/contact">
+            Start a conversation
           </Link>
-        ))}
-      </div>
+        </div>
+
+        <details className="mobile-navigation">
+          <summary className="site-nav__menu-button">
+            <span className="site-nav__menu-label">Menu</span>
+            <span className="site-nav__close-label">Close</span>
+          </summary>
+
+          <div id="mobile-navigation" className="mobile-navigation__inner">
+            {navigation.map((item) => {
+              const active = isActiveRoute(pathname, item.href)
+              return (
+                <Link key={item.name} href={item.href} aria-current={active ? 'page' : undefined}>
+                  {item.name}
+                </Link>
+              )
+            })}
+            <Link href="/contact">Start a conversation</Link>
+          </div>
+        </details>
+      </nav>
     </header>
   )
 }

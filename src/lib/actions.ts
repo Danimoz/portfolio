@@ -60,7 +60,7 @@ export async function getProjects(){
     await connectToDb();
     const projects: IProject[] = await Project.find().sort({ _id: -1 })
     return { status: 200, data: projects }
-  } catch(error) {
+  } catch {
     return { status: 400, data: [] }
   }
 }
@@ -84,7 +84,7 @@ export async function addComposition(composition: FormData){
     })
     revalidatePath('/music-catalog')
     return { status: 201, message: 'Composition added successfully' }
-  } catch(error) { 
+  } catch {
     return { status: 400, message: 'An error occured' }
   }
 }
@@ -93,17 +93,12 @@ export async function addComposition(composition: FormData){
 export async function getCompositions(search?: string, category?: string){
   try {
     await connectToDb();
-    if (search) {
-      const compositions: IComposition[] = await Composition.find({ title: { $regex: search, $options: 'i' } })
-      return { status: 200, data: compositions }
-    }
-    if (category) {
-      const compositions: IComposition[] = await Composition.find({ categories: category }).populate('categories')
-      return { status: 200, data: compositions }
-    }
-    const compositions: IComposition[] = await Composition.find()
+    const filters: Record<string, unknown> = {}
+    if (search) filters.title = { $regex: search, $options: 'i' }
+    if (category) filters.categories = category
+    const compositions: IComposition[] = await Composition.find(filters)
     return { status: 200, data: compositions }
-  } catch(error) {
+  } catch {
     return { status: 400, data: [] }
   }
 }
@@ -115,7 +110,7 @@ export async function getSingleComposition(id: string){
     const composition: IComposition | null = await Composition.findById(id)
     if (!composition) return { status: 404, data: null }
     return { status: 200, data: composition }
-  } catch(error) {
+  } catch {
     return { status: 400, data: null }
   }
 }
@@ -129,7 +124,7 @@ export async function addCategory(category: FormData){
     revalidatePath('/admin')
     return { status: 201, message: 'Category added successfully' }
   } catch(error) {
-    console.log(error)
+    console.error(error)
     return { status: 400, message: 'An error occured' }
   }
 }
@@ -140,7 +135,7 @@ export async function getCategories(){
     await connectToDb();
     const categories: ICategory[] = await CompositionCategory.find()
     return { status: 200, data: categories }
-  } catch(error) {
+  } catch {
     return { status: 400, data: [] }
   }
 }

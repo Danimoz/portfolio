@@ -1,47 +1,47 @@
-'use client';
+'use client'
 
-import { SubmitButton } from "@/components/SubmitButton";
-import { addProject } from "@/lib/actions";
-import toast from "react-hot-toast";
+import { SubmitButton } from '@/components/SubmitButton'
+import { addProject } from '@/lib/actions'
+import { notifyActionResult } from './notifyActionResult'
 
 export default function ProjectForm() {
-  
   async function action(formData: FormData) {
-    const result = await addProject(formData);
-    if (result?.status === 201) {
-      toast.success('Project added succesfully');
-    }
+    const result = await addProject(formData)
+    notifyActionResult(result, {
+      success: 'Project added.',
+      error: 'The project could not be added.',
+    })
   }
 
   return (
-    <form action={action}>
-      <h2 className="text-4xl font-bold my-6">Add Project</h2>
-      <div>
-        <label htmlFor="name" className="block mb-1">Name:</label>
-        <input type="text" id="name" name="name" className="p-3 text-gray-950 w-full rounded mb-4"required />
+    <form action={action} className="console-form">
+      <h2>Add software project</h2>
+      <div className="field-group">
+        <label htmlFor="project-name">Name</label>
+        <input type="text" id="project-name" name="name" required />
       </div>
-      <div>
-        <label htmlFor="description" className="block mb-1">Description:</label>
-        <textarea id="description" name="description" rows={4} cols={50} className="p-3 text-gray-950 w-full rounded mb-4"required />
+      <div className="field-group">
+        <label htmlFor="project-description">Description</label>
+        <textarea id="project-description" name="description" rows={5} required />
       </div>
-      <div>
-        <label htmlFor="role" className="block mb-1">Role:</label>
-        <input type="text" id="role" name="role" className="p-3 text-gray-950 w-full rounded mb-4"required />
+      <div className="field-group">
+        <label htmlFor="project-role">Role</label>
+        <input type="text" id="project-role" name="role" required />
       </div>
-      <div>
-        <label htmlFor="link" className="block mb-1">Link:</label>
-        <input type="url" id="link" name="link" className="p-3 text-gray-950 w-full rounded mb-4" />
+      <div className="field-group">
+        <label htmlFor="project-link">Project link</label>
+        <input type="url" id="project-link" name="link" required />
       </div>
-      <div>
-        <label htmlFor="image" className="block mb-1">Image:</label>
-        <input type="file" id="image" name="image" className="p-3 text-white w-full rounded mb-4" accept="image/*"/>
+      <div className="field-group">
+        <label htmlFor="project-image">Preview image</label>
+        <input type="file" id="project-image" name="image" accept="image/*" required />
       </div>
-      <div>
-        <label htmlFor="tech" className="block mb-1">Tech:</label>
-        <input type="text" id="tech" name="tech" className="p-3 text-gray-950 w-full rounded mb-4" required />
+      <div className="field-group">
+        <label htmlFor="project-tech">Technologies</label>
+        <input type="text" id="project-tech" name="tech" required />
+        <p>Separate technologies with commas.</p>
       </div>
-
-      <SubmitButton buttonText="Add Project" />
+      <SubmitButton buttonText="Add project" />
     </form>
   )
 }

@@ -1,32 +1,34 @@
-'use client';
+'use client'
 
-import { ICategory } from "@/types";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import type { ICategory } from '@/types'
+import { useRouter, useSearchParams } from 'next/navigation'
 
-export default function CompositionCategories({ categories }: { categories: string }){
-  const router = useRouter();
-  const [active, setActive] = useState('');
+export default function CompositionCategories({ categories }: { categories: ICategory[] }) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const activeCategory = searchParams.get('category')
 
-  function toggleActive(category: string, id:string){
-    if(active === category) {
-      setActive('')
-      router.push('/music-catalog')
-      return 
-    };
-    setActive(category);
-    router.push(`/music-catalog?category=${id}`)
+  const selectCategory = (id: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (activeCategory === id) params.delete('category')
+    else params.set('category', id)
+    const nextQuery = params.toString()
+
+    router.replace(`/music-catalog${nextQuery ? `?${nextQuery}` : ''}`, {
+      scroll: false,
+    })
   }
 
-  const categoriesParsed: ICategory[] = JSON.parse(categories);
+  if (!categories.length) return null
 
   return (
-    <div className="flex gap-x-3 md:gap-x-6 mb-8 overflow-x-auto">
-      {categoriesParsed?.map((category) => (
-        <button 
-          className={`px-6 py-3 rounded-xl text-sm md:text-lg ${active === category.name ? 'bg-blue-600 text-white' : 'border-2 border-slate-500'}`} 
+    <div className="category-filter" aria-label="Filter compositions by category">
+      {categories.map((category) => (
+        <button
+          type="button"
           key={category._id}
-          onClick={() => toggleActive(category.name, category._id)}
+          aria-pressed={activeCategory === category._id}
+          onClick={() => selectCategory(category._id)}
         >
           {category.name}
         </button>
