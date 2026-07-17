@@ -1,0 +1,159 @@
+.editorShell {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--surface-solid) 88%, transparent);
+}
+
+.toolbar {
+  display: flex;
+  padding: 0.65rem;
+  border-bottom: 1px solid var(--line);
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.toolbar button,
+.inlineTools button,
+.fileButton {
+  min-height: 2.2rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid transparent;
+  border-radius: 0.55rem;
+  color: var(--ink-soft);
+  background: transparent;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 680;
+  cursor: pointer;
+}
+
+.toolbar button:hover,
+.toolbar button:focus-visible,
+.toolbar .active,
+.inlineTools button,
+.fileButton {
+  border-color: var(--line);
+  color: var(--ink);
+  background: var(--surface-solid);
+}
+
+.toolbar button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.toolbarSpacer {
+  flex: 1 1 1rem;
+}
+
+.inlineTools {
+  display: grid;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--line);
+  grid-template-columns: auto minmax(10rem, 1fr) auto auto;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.inlineTools label:not(.fileButton) {
+  margin: 0;
+  font-size: 0.75rem;
+}
+
+.inlineTools input:not(.fileInput) {
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+}
+
+.fileButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.content {
+  position: relative;
+}
+
+.content[data-empty='true']::before {
+  position: absolute;
+  z-index: 1;
+  top: clamp(1.25rem, 3vw, 2.25rem);
+  left: clamp(1.25rem, 3vw, 2.25rem);
+  color: var(--ink-soft);
+  content: 'Begin with the problem this work had to solve…';
+  opacity: 0.62;
+  pointer-events: none;
+}
+
+.content :global(.tiptap) {
+  min-height: 28rem;
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+  outline: none;
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.content :global(.tiptap > * + *) {
+  margin-top: 1.1rem;
+}
+
+.content :global(.tiptap h2) {
+  margin-top: 2.75rem;
+  font-size: clamp(1.55rem, 3vw, 2.15rem);
+  letter-spacing: -0.03em;
+}
+
+.content :global(.tiptap h3) {
+  margin-top: 2rem;
+  font-size: 1.2rem;
+}
+
+.content :global(.tiptap blockquote) {
+  padding-left: 1.2rem;
+  border-left: 2px solid var(--accent);
+  color: var(--ink-soft);
+}
+
+.content :global(.tiptap img) {
+  width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+}
+
+.content :global(.tiptap code) {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.content :global(.tiptap pre) {
+  overflow-x: auto;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.hint {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border-top: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 42rem) {
+  .inlineTools {
+    grid-template-columns: 1fr;
+  }
+}

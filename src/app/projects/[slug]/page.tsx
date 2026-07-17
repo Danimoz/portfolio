@@ -6,6 +6,8 @@ import { cache } from 'react'
 import { getProjectBySlug } from '@/lib/actions'
 import { separateStringWithCommas } from '@/lib/utils'
 import { parseWorkStory } from '@/lib/workStory'
+import { workStoryExtensions } from '@/lib/workStoryExtensions'
+import { generateHTML } from '@tiptap/html'
 import styles from './story.module.css'
 
 type WorkStoryPageProps = {
@@ -41,6 +43,9 @@ export default async function WorkStoryPage({ params }: WorkStoryPageProps) {
   if (!project) notFound()
 
   const chapters = parseWorkStory(project.storyContent ?? '')
+  const storyHtml = project.storyDocument
+    ? generateHTML(project.storyDocument, workStoryExtensions)
+    : null
   const technologies = separateStringWithCommas(project.tech)
 
   return (
@@ -80,18 +85,26 @@ export default async function WorkStoryPage({ params }: WorkStoryPageProps) {
         />
       </figure>
 
-      <section className={styles.chapters} aria-label={`${project.name} story`}>
-        {chapters.map((chapter, chapterIndex) => (
-          <article className={styles.chapter} key={`${chapter.heading}-${chapterIndex}`}>
-            <h2>{chapter.heading}</h2>
-            <div className={styles.chapterCopy}>
-              {chapter.paragraphs.map((paragraph, index) => (
-                <p key={`${chapter.heading}-${index}`}>{paragraph}</p>
-              ))}
-            </div>
-          </article>
-        ))}
-      </section>
+      {storyHtml ? (
+        <article
+          className={styles.richStory}
+          aria-label={`${project.name} story`}
+          dangerouslySetInnerHTML={{ __html: storyHtml }}
+        />
+      ) : (
+        <section className={styles.chapters} aria-label={`${project.name} story`}>
+          {chapters.map((chapter, chapterIndex) => (
+            <article className={styles.chapter} key={`${chapter.heading}-${chapterIndex}`}>
+              <h2>{chapter.heading}</h2>
+              <div className={styles.chapterCopy}>
+                {chapter.paragraphs.map((paragraph, index) => (
+                  <p key={`${chapter.heading}-${index}`}>{paragraph}</p>
+                ))}
+              </div>
+            </article>
+          ))}
+        </section>
+      )}
 
       <footer className={styles.endMatter}>
         <p>Explore the product or continue through the software archive.</p>

@@ -23,6 +23,9 @@ const projectSchema = new Schema<IProject>({
   },
   storyContent: {
     type: String,
+  },
+  storyDocument: {
+    type: Schema.Types.Mixed,
     required: workStoryRequired,
   },
   date: { type: Date, default: Date.now },
@@ -42,6 +45,11 @@ const compositionSchema = new Schema({
   noteFromComposer: String,
   compositionText: String,
   youtubeLinks: String,
+  scorePurchaseLinks: [{
+    label: { type: String, required: true },
+    url: { type: String, required: true },
+    _id: false,
+  }],
   categories: [{ type: Schema.Types.ObjectId, ref: 'CompositionCategory' }],
 })
 

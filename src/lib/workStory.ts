@@ -1,3 +1,5 @@
+import type { JSONContent } from '@tiptap/core'
+
 export type WorkStoryChapter = {
   heading: string
   paragraphs: string[]
@@ -33,4 +35,63 @@ function splitParagraphs(value: string) {
     .split(/\n{2,}/)
     .map((paragraph) => paragraph.trim())
     .filter(Boolean)
+}
+
+export function legacyStoryToDocument(content: string): JSONContent {
+  const chapters = parseWorkStory(content)
+
+  return {
+    type: 'doc',
+    content: chapters.flatMap((chapter) => [
+      {
+        type: 'heading',
+        attrs: { level: 2 },
+        content: [{ type: 'text', text: chapter.heading }],
+      },
+      ...chapter.paragraphs.map((paragraph) => ({
+        type: 'paragraph',
+        content: [{ type: 'text', text: paragraph }],
+      })),
+    ]),
+  }
+}
+
+export function hasWorkStoryContent(document: JSONContent): boolean {
+  if (document.type === 'image') return Boolean(document.attrs?.src)
+  if (typeof document.text === 'string' && document.text.trim()) return true
+  return childNodes(document).some(hasWorkStoryContent)
+}
+
+export function hasWorkStoryBody(document: JSONContent): boolean {
+  if (document.type === 'heading') return false
+  if (['paragraph', 'codeBlock'].includes(document.type ?? '') && containsText(document)) return true
+  return childNodes(document).some(hasWorkStoryBody)
+}
+
+function containsText(document: JSONContent): boolean {
+  if (typeof document.text === 'string' && document.text.trim()) return true
+  return childNodes(document).some(containsText)
+}
+
+export type WorkStoryImage = {
+  src: unknown
+  alt: unknown
+}
+
+export function getWorkStoryImages(document: JSONContent): WorkStoryImage[] {
+  const current = document.type === 'image'
+    ? [{ src: document.attrs?.src, alt: document.attrs?.alt }]
+    : []
+
+  return [
+    ...current,
+    ...childNodes(document).flatMap(getWorkStoryImages),
+  ]
+}
+
+function childNodes(document: JSONContent): JSONContent[] {
+  if (!Array.isArray(document.content)) return []
+  return document.content.filter(
+    (child): child is JSONContent => typeof child === 'object' && child !== null,
+  )
 }

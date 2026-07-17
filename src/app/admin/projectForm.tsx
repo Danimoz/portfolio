@@ -5,6 +5,8 @@ import { SubmitButton } from '@/components/SubmitButton'
 import { addProject, updateProject } from '@/lib/actions'
 import type { IProject } from '@/types'
 import { notifyActionResult } from './notifyActionResult'
+import WorkStoryEditor from './workStoryEditor'
+import { legacyStoryToDocument } from '@/lib/workStory'
 
 export type EditableProject = Omit<IProject, '_id' | 'date'> & { _id: string }
 
@@ -89,16 +91,15 @@ export default function ProjectForm({ project }: { project?: EditableProject }) 
             <p>Leave empty to generate it from the project name.</p>
           </div>
           <div className="field-group">
-            <label htmlFor={`${formId}-story-content`}>Work Story</label>
-            <textarea
-              id={`${formId}-story-content`}
-              name="storyContent"
-              rows={16}
-              defaultValue={project?.storyContent}
-              placeholder={'## The problem\n\nExplain what needed to change.\n\n## The approach\n\nDescribe the important decisions.'}
-              required
+            <label htmlFor={`${formId}-story-document`}>Work Story</label>
+            <WorkStoryEditor
+              id={`${formId}-story-document`}
+              initialContent={
+                project?.storyDocument ??
+                legacyStoryToDocument(project?.storyContent ?? '')
+              }
             />
-            <p>Start chapters with ## and separate paragraphs with a blank line.</p>
+            <p>The authoring guide in docs/work-stories.md includes the full chapter structure.</p>
           </div>
         </>
       ) : null}

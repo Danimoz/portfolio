@@ -100,6 +100,19 @@ export default function CompositionForm({
         <p>Separate multiple links with commas.</p>
       </div>
       <div className="field-group">
+        <label htmlFor={`${formId}-score-links`}>Published score links</label>
+        <textarea
+          id={`${formId}-score-links`}
+          name="scorePurchaseLinks"
+          rows={4}
+          defaultValue={composition?.scorePurchaseLinks
+            ?.map((link) => `${link.label} | ${link.url}`)
+            .join('\n')}
+          placeholder={'Publisher name | https://publisher.example/score\nDigital edition | https://example.com/score'}
+        />
+        <p>One purchase destination per line. Leave empty when the score is not yet available.</p>
+      </div>
+      <div className="field-group">
         <label htmlFor={`${formId}-categories`}>Categories</label>
         <select
           id={`${formId}-categories`}

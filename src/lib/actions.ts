@@ -8,6 +8,10 @@ import { ICategory, IComposition, IProject } from '@/types';
 import mongoose from 'mongoose';
 import { Resend } from 'resend';
 import { EmailTemplate } from '@/components/EmailTemplate';
+import type { JSONContent } from '@tiptap/core';
+import { getWorkStoryImages, hasWorkStoryBody } from './workStory';
+import { generateHTML } from '@tiptap/html';
+import { workStoryExtensions } from './workStoryExtensions';
 
           
 cloudinary.config({ 
@@ -56,8 +60,10 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, '')
 }
 
-async function uploadProjectImage(image: File) {
-  if (!image.size) throw new ActionInputError('A project image is required')
+async function uploadPortfolioImage(image: File, missingMessage: string) {
+  if (!image.size) throw new ActionInputError(missingMessage)
+  if (!image.type.startsWith('image/')) throw new ActionInputError('Choose a valid image file')
+  if (image.size > 10 * 1024 * 1024) throw new ActionInputError('Images must be smaller than 10 MB')
 
   const buffer = Buffer.from(await image.arrayBuffer())
   return new Promise<UploadApiResponse>((resolve, reject) => {
@@ -76,12 +82,46 @@ function projectFields(formData: FormData, image: string) {
   const story = formData.get('story') === 'true'
   const requestedSlug = optionalText(formData, 'slug')
   const slug = story ? slugify(requestedSlug || name) : undefined
-  const storyContent = story ? requiredText(formData, 'storyContent') : undefined
+  let storyDocument: JSONContent | undefined
+
+  if (story) {
+    const rawDocument = requiredText(formData, 'storyDocument')
+    try {
+      storyDocument = JSON.parse(rawDocument) as JSONContent
+    } catch {
+      throw new ActionInputError('The Work Story document is invalid')
+    }
+
+    if (!storyDocument || storyDocument.type !== 'doc' || !Array.isArray(storyDocument.content)) {
+      throw new ActionInputError('The Work Story document is invalid')
+    }
+
+    if (!hasWorkStoryBody(storyDocument)) {
+      throw new ActionInputError('The Work Story needs content beneath its headings')
+    }
+
+    for (const imageNode of getWorkStoryImages(storyDocument)) {
+      if (typeof imageNode.alt !== 'string' || !imageNode.alt.trim()) {
+        throw new ActionInputError('Every Work Story image needs a useful description')
+      }
+
+      try {
+        if (typeof imageNode.src !== 'string') throw new Error('Missing source')
+        const imageUrl = new URL(imageNode.src)
+        if (!['http:', 'https:'].includes(imageUrl.protocol)) throw new Error('Unsupported protocol')
+      } catch {
+        throw new ActionInputError('Every Work Story image needs a valid remote URL')
+      }
+    }
+
+    try {
+      generateHTML(storyDocument, workStoryExtensions)
+    } catch {
+      throw new ActionInputError('The Work Story contains unsupported formatting')
+    }
+  }
 
   if (story && !slug) throw new ActionInputError('A valid Work Story slug is required')
-  if (storyContent && !storyContent.replace(/^##\s+.+$/gm, '').trim()) {
-    throw new ActionInputError('The Work Story needs content beneath at least one chapter')
-  }
 
   return {
     name,
@@ -91,8 +131,34 @@ function projectFields(formData: FormData, image: string) {
     tech: requiredText(formData, 'tech'),
     role: requiredText(formData, 'role'),
     story,
-    ...(story ? { slug, storyContent } : {}),
+    ...(story ? { slug, storyDocument } : {}),
   }
+}
+
+function purchaseLinks(formData: FormData) {
+  const lines = optionalText(formData, 'scorePurchaseLinks')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+
+  return lines.map((line, index) => {
+    const separator = line.indexOf('|')
+    const label = separator === -1 ? '' : line.slice(0, separator).trim()
+    const url = separator === -1 ? '' : line.slice(separator + 1).trim()
+
+    if (!label || !url) {
+      throw new ActionInputError(`Score link ${index + 1} must use Publisher name | https://…`)
+    }
+
+    try {
+      const parsed = new URL(url)
+      if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Unsupported protocol')
+    } catch {
+      throw new ActionInputError(`Score link ${index + 1} needs a valid http or https URL`)
+    }
+
+    return { label, url }
+  })
 }
 
 function compositionFields(formData: FormData) {
@@ -109,6 +175,7 @@ function compositionFields(formData: FormData) {
     noteFromComposer: optionalText(formData, 'noteFromComposer'),
     compositionText: optionalText(formData, 'compositionText'),
     youtubeLinks: optionalText(formData, 'youtubeLinks'),
+    scorePurchaseLinks: purchaseLinks(formData),
     categories: categories.map((id) => new mongoose.Types.ObjectId(id)),
   }
 }
@@ -124,7 +191,9 @@ async function removeCloudinaryImage(publicId?: string) {
 
 function cloudinaryPublicId(url: string) {
   try {
-    const segments = new URL(url).pathname.split('/').filter(Boolean)
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'https:' || parsed.hostname !== 'res.cloudinary.com') return undefined
+    const segments = parsed.pathname.split('/').filter(Boolean)
     const uploadIndex = segments.indexOf('upload')
     if (uploadIndex === -1) return undefined
     const assetSegments = segments.slice(uploadIndex + 1)
@@ -144,7 +213,7 @@ export async function addProject(project: FormData){
     if (!(image instanceof File)) throw new ActionInputError('A project image is required')
 
     await connectToDb()
-    const upload = await uploadProjectImage(image)
+    const upload = await uploadPortfolioImage(image, 'A project image is required')
     uploadedPublicId = upload.public_id
     const fields = projectFields(project, upload.secure_url)
     await Project.create(fields)
@@ -168,11 +237,16 @@ export async function updateProject(id: string, project: FormData) {
 
     const existing = await Project.findById(id)
     if (!existing) return { status: 404, message: 'Project not found.' }
+    const existingStoryImages = existing.storyDocument
+      ? getWorkStoryImages(existing.storyDocument as JSONContent)
+          .map((imageNode) => imageNode.src)
+          .filter((src): src is string => typeof src === 'string')
+      : []
 
     const replacement = project.get('image')
     let image = existing.image
     if (replacement instanceof File && replacement.size > 0) {
-      const upload = await uploadProjectImage(replacement)
+      const upload = await uploadPortfolioImage(replacement, 'Choose a replacement project image')
       replacementPublicId = upload.public_id
       image = upload.secure_url
     }
@@ -180,7 +254,7 @@ export async function updateProject(id: string, project: FormData) {
     const fields = projectFields(project, image)
     const update = fields.story
       ? { $set: fields }
-      : { $set: fields, $unset: { slug: 1, storyContent: 1 } }
+      : { $set: fields, $unset: { slug: 1, storyContent: 1, storyDocument: 1 } }
     const updated = await Project.findByIdAndUpdate(id, update, {
       new: true,
       runValidators: true,
@@ -188,6 +262,14 @@ export async function updateProject(id: string, project: FormData) {
     if (!updated) throw new Error('Project no longer exists')
 
     if (replacementPublicId) await removeCloudinaryImage(cloudinaryPublicId(existing.image))
+    const nextStoryImages = fields.storyDocument
+      ? new Set(getWorkStoryImages(fields.storyDocument).map((imageNode) => imageNode.src))
+      : new Set()
+    await Promise.all(
+      existingStoryImages
+        .filter((url) => !nextStoryImages.has(url))
+        .map((url) => removeCloudinaryImage(cloudinaryPublicId(url))),
+    )
     revalidatePath('/projects')
     if (existing.slug) revalidatePath(`/projects/${existing.slug}`)
     if (updated.story && updated.slug) revalidatePath(`/projects/${updated.slug}`)
@@ -197,6 +279,25 @@ export async function updateProject(id: string, project: FormData) {
     await removeCloudinaryImage(replacementPublicId)
     console.error('Could not update project:', error)
     return actionFailure(error, 'The project could not be updated because of a server error.')
+  }
+}
+
+export async function uploadStoryImage(formData: FormData) {
+  let uploadedPublicId: string | undefined
+
+  try {
+    const image = formData.get('image')
+    if (!(image instanceof File)) throw new ActionInputError('Choose an image to upload')
+    const upload = await uploadPortfolioImage(image, 'Choose an image to upload')
+    uploadedPublicId = upload.public_id
+    return { status: 201, message: 'Image uploaded.', url: upload.secure_url }
+  } catch (error) {
+    await removeCloudinaryImage(uploadedPublicId)
+    console.error('Could not upload Work Story image:', error)
+    return {
+      ...actionFailure(error, 'The image could not be uploaded because of a server error.'),
+      url: undefined,
+    }
   }
 }
 

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getSingleComposition } from '@/lib/actions'
 import { separateStringWithCommas } from '@/lib/utils'
+import styles from './composition.module.css'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -66,6 +67,24 @@ export default async function SingleComposition({ params }: Props) {
                 allowFullScreen
                 loading="lazy"
               />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {composition.scorePurchaseLinks?.length ? (
+        <section className={`${styles.score} reveal`} aria-labelledby="score-heading">
+          <div>
+            <p className={styles.eyebrow}>Published edition</p>
+            <h2 id="score-heading">Purchase the score</h2>
+            <p>Choose a publisher or edition to continue to its secure storefront.</p>
+          </div>
+          <div className={styles.links}>
+            {composition.scorePurchaseLinks.map((link) => (
+              <a key={`${link.label}-${link.url}`} href={link.url} target="_blank" rel="noreferrer">
+                <span>{link.label}</span>
+                <span aria-hidden="true">↗</span>
+              </a>
             ))}
           </div>
         </section>

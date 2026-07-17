@@ -29,6 +29,10 @@ export default async function AdminPage() {
     noteFromComposer: composition.noteFromComposer ?? '',
     compositionText: composition.compositionText ?? '',
     youtubeLinks: composition.youtubeLinks ?? '',
+    scorePurchaseLinks: composition.scorePurchaseLinks?.map((link) => ({
+      label: link.label,
+      url: link.url,
+    })) ?? [],
     categories: composition.categories.map((category) => category.toString()),
   }))
   const projects: EditableProject[] = projectResult.data.flatMap((project) => {
@@ -46,6 +50,9 @@ export default async function AdminPage() {
         story: project.story ?? false,
         slug: project.slug ?? '',
         storyContent: project.storyContent ?? '',
+        storyDocument: project.storyDocument
+          ? JSON.parse(JSON.stringify(project.storyDocument))
+          : undefined,
       },
     ]
   })
