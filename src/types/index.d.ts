@@ -1,4 +1,5 @@
 export type IProject = {
+  _id?: string,
   name: string,
   description: string,
   image: string,

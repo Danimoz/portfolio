@@ -1,39 +1,54 @@
-import { connect, Connection } from 'mongoose'; // Assuming you're using mongoose
+import mongoose, { type Connection } from 'mongoose'
 
-// Define the cached connection outside the function
-let cachedConnection: Connection | null = null;
+type ConnectionCache = {
+  connection: Connection | null
+  promise: Promise<Connection> | null
+}
+
+const globalWithMongoose = globalThis as typeof globalThis & {
+  mongooseConnectionCache?: ConnectionCache
+}
+
+const cache = globalWithMongoose.mongooseConnectionCache ?? {
+  connection: null,
+  promise: null,
+}
+
+globalWithMongoose.mongooseConnectionCache = cache
 
 export default async function connectToDb() {
-  try {
-    // If we have a connection, return it
-    if (cachedConnection) {
-      return cachedConnection;
-    }
+  if (cache.connection?.readyState === 1) return cache.connection
 
-    // Check if we have the MongoDB URI
-    if (!process.env.MONGODB_URI) {
-      throw new Error('MONGODB_URI environment variable is not defined');
-    }
+  if (!process.env.MONGODB_URI) {
+    throw new Error('MONGODB_URI environment variable is not defined')
+  }
 
-    // Create a new connection
-    const conn = await connect(process.env.MONGODB_URI, {
+  cache.connection = null
+
+  if (!cache.promise) {
+    cache.promise = mongoose
+      .connect(process.env.MONGODB_URI, {
       bufferCommands: false,
-      // Add these options for better reliability in serverless
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
-    });
+      })
+      .then((mongooseInstance) => mongooseInstance.connection)
+  }
 
-    cachedConnection = conn.connection;
+  try {
+    const connection = await cache.promise
+    cache.connection = connection
 
-    // Add connection error handler
-    cachedConnection.on('error', (err) => {
-      console.error('MongoDB connection error:', err);
-      cachedConnection = null; // Reset on error
-    });
+    connection.once('disconnected', () => {
+      if (cache.connection === connection) cache.connection = null
+    })
 
-    return cachedConnection;
+    return connection
   } catch (error) {
-    console.error('Database connection error:', error);
-    throw error;
+    cache.connection = null
+    console.error('Database connection error:', error)
+    throw error
+  } finally {
+    cache.promise = null
   }
 }

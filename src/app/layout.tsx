@@ -24,12 +24,12 @@ export const metadata: Metadata = {
     url: '/',
     title: 'Daniel Azubuine | Music and Software',
     description: 'Compositions, performances, software projects, and the craft connecting them.',
-    images: [{ url: '/images/dan.jpeg', width: 1920, height: 1280, alt: 'Daniel Azubuine' }],
+    images: [{ url: '/images/hero-portrait.jpg', width: 3456, height: 2987, alt: 'Daniel Azubuine' }],
   },
   twitter: {
     card: 'summary_large_image',
     creator: '@danielazubuine',
-    images: ['/images/dan.jpeg'],
+    images: ['/images/hero-portrait.jpg'],
   },
   creator: 'Daniel Azubuine',
   verification: {

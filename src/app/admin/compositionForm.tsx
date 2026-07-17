@@ -1,56 +1,113 @@
 'use client'
 
 import { SubmitButton } from '@/components/SubmitButton'
-import { addComposition } from '@/lib/actions'
-import type { ICategory } from '@/types'
+import { addComposition, updateComposition } from '@/lib/actions'
+import type { ICategory, IComposition } from '@/types'
 import { notifyActionResult } from './notifyActionResult'
 
-export default function CompositionForm({ categories }: { categories: ICategory[] }) {
+export default function CompositionForm({
+  categories,
+  composition,
+}: {
+  categories: ICategory[]
+  composition?: IComposition
+}) {
+  const formId = composition ? `composition-${composition._id}` : 'new-composition'
+
   async function action(formData: FormData) {
-    const result = await addComposition(formData)
+    const result = composition
+      ? await updateComposition(composition._id, formData)
+      : await addComposition(formData)
     notifyActionResult(result, {
-      success: 'Composition added.',
-      error: 'The composition could not be added.',
+      success: composition ? 'Composition updated.' : 'Composition added.',
+      error: composition
+        ? 'The composition could not be updated.'
+        : 'The composition could not be added.',
     })
   }
 
   return (
     <form action={action} className="console-form console-form--wide">
-      <h2>Add composition</h2>
+      <h2>{composition ? `Edit ${composition.title}` : 'Add composition'}</h2>
       <div className="console-form__columns">
         <div className="field-group">
-          <label htmlFor="composition-title">Title</label>
-          <input type="text" id="composition-title" name="title" required />
+          <label htmlFor={`${formId}-title`}>Title</label>
+          <input
+            type="text"
+            id={`${formId}-title`}
+            name="title"
+            defaultValue={composition?.title}
+            required
+          />
         </div>
         <div className="field-group">
-          <label htmlFor="composition-duration">Duration</label>
-          <input type="text" id="composition-duration" name="duration" required />
+          <label htmlFor={`${formId}-duration`}>Duration</label>
+          <input
+            type="text"
+            id={`${formId}-duration`}
+            name="duration"
+            defaultValue={composition?.duration}
+            required
+          />
         </div>
         <div className="field-group">
-          <label htmlFor="composition-year">Year composed</label>
-          <input type="text" id="composition-year" name="yearOfComposition" required />
+          <label htmlFor={`${formId}-year`}>Year composed</label>
+          <input
+            type="text"
+            id={`${formId}-year`}
+            name="yearOfComposition"
+            defaultValue={composition?.yearOfComposition}
+            required
+          />
         </div>
         <div className="field-group">
-          <label htmlFor="composition-instrumentation">Instrumentation</label>
-          <input type="text" id="composition-instrumentation" name="instrumentation" required />
+          <label htmlFor={`${formId}-instrumentation`}>Instrumentation</label>
+          <input
+            type="text"
+            id={`${formId}-instrumentation`}
+            name="instrumentation"
+            defaultValue={composition?.instrumentation}
+            required
+          />
         </div>
       </div>
       <div className="field-group">
-        <label htmlFor="composer-note">Note from the composer</label>
-        <textarea id="composer-note" name="noteFromComposer" rows={6} />
+        <label htmlFor={`${formId}-note`}>Note from the composer</label>
+        <textarea
+          id={`${formId}-note`}
+          name="noteFromComposer"
+          rows={6}
+          defaultValue={composition?.noteFromComposer}
+        />
       </div>
       <div className="field-group">
-        <label htmlFor="composition-text">Text</label>
-        <textarea id="composition-text" name="compositionText" rows={6} />
+        <label htmlFor={`${formId}-text`}>Text</label>
+        <textarea
+          id={`${formId}-text`}
+          name="compositionText"
+          rows={6}
+          defaultValue={composition?.compositionText}
+        />
       </div>
       <div className="field-group">
-        <label htmlFor="composition-youtube">YouTube embed links</label>
-        <input type="text" id="composition-youtube" name="youtubeLinks" />
+        <label htmlFor={`${formId}-youtube`}>YouTube embed links</label>
+        <input
+          type="text"
+          id={`${formId}-youtube`}
+          name="youtubeLinks"
+          defaultValue={composition?.youtubeLinks}
+        />
         <p>Separate multiple links with commas.</p>
       </div>
       <div className="field-group">
-        <label htmlFor="composition-categories">Categories</label>
-        <select id="composition-categories" name="categories" multiple required>
+        <label htmlFor={`${formId}-categories`}>Categories</label>
+        <select
+          id={`${formId}-categories`}
+          name="categories"
+          multiple
+          defaultValue={composition?.categories}
+          required
+        >
           {categories.map((category) => (
             <option key={category._id} value={category._id}>
               {category.name}
@@ -59,7 +116,10 @@ export default function CompositionForm({ categories }: { categories: ICategory[
         </select>
         <p>Use Control or Command to select more than one.</p>
       </div>
-      <SubmitButton buttonText="Add composition" />
+      <SubmitButton
+        buttonText={composition ? 'Save composition' : 'Add composition'}
+        pendingText={composition ? 'Saving composition' : 'Adding composition'}
+      />
     </form>
   )
 }

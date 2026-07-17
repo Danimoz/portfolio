@@ -16,41 +16,149 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET as string,  
 });
 
+class ActionInputError extends Error {}
+
+function actionFailure(error: unknown, fallbackMessage: string) {
+  const isInputError =
+    error instanceof ActionInputError || error instanceof mongoose.Error.ValidationError
+
+  return {
+    status: isInputError ? 400 : 500,
+    message: isInputError && error instanceof Error ? error.message : fallbackMessage,
+  }
+}
+
+function requiredText(formData: FormData, field: string) {
+  const value = formData.get(field)
+  if (typeof value !== 'string' || !value.trim()) throw new ActionInputError(`${field} is required`)
+  return value.trim()
+}
+
+function optionalText(formData: FormData, field: string) {
+  const value = formData.get(field)
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+async function uploadProjectImage(image: File) {
+  if (!image.size) throw new ActionInputError('A project image is required')
+
+  const buffer = Buffer.from(await image.arrayBuffer())
+  return new Promise<UploadApiResponse>((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream({ folder: 'portfolio', resource_type: 'image' }, (error, result) => {
+        if (error) reject(error)
+        else if (result) resolve(result)
+        else reject(new Error('Cloudinary did not return an upload result'))
+      })
+      .end(buffer)
+  })
+}
+
+function projectFields(formData: FormData, image: string) {
+  return {
+    name: requiredText(formData, 'name'),
+    description: requiredText(formData, 'description'),
+    image,
+    link: requiredText(formData, 'link'),
+    tech: requiredText(formData, 'tech'),
+    role: requiredText(formData, 'role'),
+  }
+}
+
+function compositionFields(formData: FormData) {
+  const categories = formData.getAll('categories').map(String)
+  if (!categories.length || categories.some((id) => !mongoose.isValidObjectId(id))) {
+    throw new ActionInputError('Select at least one valid category')
+  }
+
+  return {
+    title: requiredText(formData, 'title'),
+    duration: requiredText(formData, 'duration'),
+    yearOfComposition: requiredText(formData, 'yearOfComposition'),
+    instrumentation: requiredText(formData, 'instrumentation'),
+    noteFromComposer: optionalText(formData, 'noteFromComposer'),
+    compositionText: optionalText(formData, 'compositionText'),
+    youtubeLinks: optionalText(formData, 'youtubeLinks'),
+    categories: categories.map((id) => new mongoose.Types.ObjectId(id)),
+  }
+}
+
+async function removeCloudinaryImage(publicId?: string) {
+  if (!publicId) return
+  try {
+    await cloudinary.uploader.destroy(publicId)
+  } catch (error) {
+    console.error('Could not remove replaced Cloudinary image:', error)
+  }
+}
+
+function cloudinaryPublicId(url: string) {
+  try {
+    const segments = new URL(url).pathname.split('/').filter(Boolean)
+    const uploadIndex = segments.indexOf('upload')
+    if (uploadIndex === -1) return undefined
+    const assetSegments = segments.slice(uploadIndex + 1)
+    if (/^v\d+$/.test(assetSegments[0] ?? '')) assetSegments.shift()
+    return decodeURIComponent(assetSegments.join('/').replace(/\.[^/.]+$/, ''))
+  } catch {
+    return undefined
+  }
+}
+
 
 export async function addProject(project: FormData){
-  const image = project.get('image') as File
-  const arrayBuffer = await image.arrayBuffer()
-  const buffer = new Uint8Array(arrayBuffer)
+  let uploadedPublicId: string | undefined
 
   try {
-    await connectToDb();
+    const image = project.get('image')
+    if (!(image instanceof File)) throw new ActionInputError('A project image is required')
 
-    const res: UploadApiResponse = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream({ folder: 'portfolio' }, function(error, result){
-        if (error) {
-          reject(error);
-          return
-        } 
-        if (result) resolve(result)
-      }).end(buffer)
-    })
-      
-    const projectData = {
-      name: project.get('name'),
-      description: project.get('description'),
-      image: res.secure_url,
-      link: project.get('link'),
-      tech: project.get('tech'),
-      role: project.get('role'),
+    await connectToDb()
+    const upload = await uploadProjectImage(image)
+    uploadedPublicId = upload.public_id
+    await Project.create(projectFields(project, upload.secure_url))
+    revalidatePath('/projects')
+    revalidatePath('/admin')
+    return { status: 201, message: 'Project added successfully' }
+  } catch(error) {
+    await removeCloudinaryImage(uploadedPublicId)
+    console.error('Could not add project:', error)
+    return actionFailure(error, 'The project could not be added because of a server error.')
+  }
+}
+
+export async function updateProject(id: string, project: FormData) {
+  let replacementPublicId: string | undefined
+
+  try {
+    if (!mongoose.isValidObjectId(id)) throw new ActionInputError('Invalid project id')
+    await connectToDb()
+
+    const existing = await Project.findById(id)
+    if (!existing) return { status: 404, message: 'Project not found.' }
+
+    const replacement = project.get('image')
+    let image = existing.image
+    if (replacement instanceof File && replacement.size > 0) {
+      const upload = await uploadProjectImage(replacement)
+      replacementPublicId = upload.public_id
+      image = upload.secure_url
     }
 
-    await Project.create(projectData)
+    const updated = await Project.findByIdAndUpdate(id, projectFields(project, image), {
+      new: true,
+      runValidators: true,
+    })
+    if (!updated) throw new Error('Project no longer exists')
+
+    if (replacementPublicId) await removeCloudinaryImage(cloudinaryPublicId(existing.image))
     revalidatePath('/projects')
-    return { status: 201, message: 'Project added successfully' }
-    
-  } catch(error) {
-    console.error(error)
-    return { status: 400, message: 'An error occured' }
+    revalidatePath('/admin')
+    return { status: 200, message: 'Project updated successfully' }
+  } catch (error) {
+    await removeCloudinaryImage(replacementPublicId)
+    console.error('Could not update project:', error)
+    return actionFailure(error, 'The project could not be updated because of a server error.')
   }
 }
 
@@ -67,25 +175,35 @@ export async function getProjects(){
 
 
 export async function addComposition(composition: FormData){
-  const data = Object.fromEntries(composition.entries())
-  const categories = Array.from(composition.getAll('categories') as unknown as string[])
-  const categoryIds = categories.map((categoryId: string) => new mongoose.Types.ObjectId(categoryId));
   try {
-    await connectToDb();
-    await Composition.create({ 
-      title: data.title as string,
-      duration: data.duration as string,
-      yearOfComposition: data.yearOfComposition as string,
-      instrumentation: data.instrumentation as string,
-      noteFromComposer: data.noteFromComposer as string,
-      compositionText: data.compositionText as string,
-      categories: categoryIds,
-      youtubeLinks: data.youtubeLinks as string,
-    })
+    await connectToDb()
+    await Composition.create(compositionFields(composition))
     revalidatePath('/music-catalog')
+    revalidatePath('/admin')
     return { status: 201, message: 'Composition added successfully' }
-  } catch {
-    return { status: 400, message: 'An error occured' }
+  } catch (error) {
+    console.error('Could not add composition:', error)
+    return actionFailure(error, 'The composition could not be added because of a server error.')
+  }
+}
+
+export async function updateComposition(id: string, composition: FormData) {
+  try {
+    if (!mongoose.isValidObjectId(id)) throw new ActionInputError('Invalid composition id')
+    await connectToDb()
+    const updated = await Composition.findByIdAndUpdate(id, compositionFields(composition), {
+      new: true,
+      runValidators: true,
+    })
+    if (!updated) return { status: 404, message: 'Composition not found.' }
+
+    revalidatePath('/music-catalog')
+    revalidatePath(`/music-catalog/${id}`)
+    revalidatePath('/admin')
+    return { status: 200, message: 'Composition updated successfully' }
+  } catch (error) {
+    console.error('Could not update composition:', error)
+    return actionFailure(error, 'The composition could not be updated because of a server error.')
   }
 }
 

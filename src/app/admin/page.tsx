@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
-import { getCategories } from '@/lib/actions'
+import { getCategories, getCompositions, getProjects } from '@/lib/actions'
 import CategoryForm from './categoryForm'
 import CompositionForm from './compositionForm'
-import ProjectForm from './projectForm'
+import ProjectForm, { type EditableProject } from './projectForm'
 
 export const metadata: Metadata = {
   title: 'Studio Console',
@@ -10,11 +10,42 @@ export const metadata: Metadata = {
 }
 
 export default async function AdminPage() {
-  const compositionCategories = await getCategories()
-  const categories = compositionCategories.data.map((category) => ({
+  const [categoryResult, compositionResult, projectResult] = await Promise.all([
+    getCategories(),
+    getCompositions(),
+    getProjects(),
+  ])
+
+  const categories = categoryResult.data.map((category) => ({
     _id: category._id.toString(),
     name: category.name,
   }))
+  const compositions = compositionResult.data.map((composition) => ({
+    _id: composition._id.toString(),
+    title: composition.title,
+    duration: composition.duration,
+    yearOfComposition: composition.yearOfComposition,
+    instrumentation: composition.instrumentation,
+    noteFromComposer: composition.noteFromComposer ?? '',
+    compositionText: composition.compositionText ?? '',
+    youtubeLinks: composition.youtubeLinks ?? '',
+    categories: composition.categories.map((category) => category.toString()),
+  }))
+  const projects: EditableProject[] = projectResult.data.flatMap((project) => {
+    const id = project._id?.toString()
+    if (!id) return []
+    return [
+      {
+        _id: id,
+        name: project.name,
+        description: project.description,
+        image: project.image,
+        link: project.link,
+        tech: project.tech,
+        role: project.role,
+      },
+    ]
+  })
 
   return (
     <main id="main-content" className="page-shell studio-console">
@@ -27,6 +58,51 @@ export default async function AdminPage() {
         <CompositionForm categories={categories} />
         <ProjectForm />
         <CategoryForm />
+      </section>
+
+      <section className="console-library" aria-labelledby="edit-content-heading">
+        <header>
+          <p>Published work</p>
+          <h2 id="edit-content-heading">Edit existing content</h2>
+        </header>
+
+        <div className="console-library__group">
+          <h3>Compositions</h3>
+          {compositions.length ? (
+            <div className="console-editor-list">
+              {compositions.map((composition) => (
+                <details className="console-editor" key={composition._id}>
+                  <summary>
+                    <span>{composition.title}</span>
+                    <span>{composition.instrumentation}</span>
+                  </summary>
+                  <CompositionForm categories={categories} composition={composition} />
+                </details>
+              ))}
+            </div>
+          ) : (
+            <p>No compositions are available to edit.</p>
+          )}
+        </div>
+
+        <div className="console-library__group">
+          <h3>Software projects</h3>
+          {projects.length ? (
+            <div className="console-editor-list">
+              {projects.map((project) => (
+                <details className="console-editor" key={project._id}>
+                  <summary>
+                    <span>{project.name}</span>
+                    <span>{project.role}</span>
+                  </summary>
+                  <ProjectForm project={project} />
+                </details>
+              ))}
+            </div>
+          ) : (
+            <p>No software projects are available to edit.</p>
+          )}
+        </div>
       </section>
     </main>
   )

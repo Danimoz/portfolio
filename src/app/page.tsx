@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import dan from '@images/dan.jpeg'
+import dan from '@images/hero-portrait.jpg'
 import pianoMusic from '@images/pianomusic.jpg'
 import software from '@images/software.jpg'
 

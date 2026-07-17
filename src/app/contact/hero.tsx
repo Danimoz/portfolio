@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import danny from '@images/danny.jpg'
+import danny from '@images/contact-portrait.jpg'
 
 export default function AboutPortrait() {
   return (
