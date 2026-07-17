@@ -1,7 +1,10 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useRef } from 'react'
+import brandmark from '@images/dflat.svg'
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -17,12 +20,19 @@ function isActiveRoute(pathname: string, href: string) {
 
 export default function Navbar() {
   const pathname = usePathname()
+  const mobileNavRef = useRef<HTMLDetailsElement>(null)
+
+  useEffect(() => {
+    if (mobileNavRef.current) {
+      mobileNavRef.current.open = false
+    }
+  }, [pathname])
 
   return (
     <header className="site-header">
       <nav className="site-nav" aria-label="Primary navigation">
         <Link href="/" className="site-nav__brand">
-          <span aria-hidden="true">DA</span>
+          <Image src={brandmark} alt="" aria-hidden="true" width={34} height={34} priority />
           <span>Daniel Azubuine</span>
         </Link>
 
@@ -40,7 +50,7 @@ export default function Navbar() {
           </Link>
         </div>
 
-        <details className="mobile-navigation">
+        <details ref={mobileNavRef} className="mobile-navigation">
           <summary className="site-nav__menu-button">
             <span className="site-nav__menu-label">Menu</span>
             <span className="site-nav__close-label">Close</span>

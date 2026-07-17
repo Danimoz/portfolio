@@ -14,8 +14,10 @@ export default function Footer() {
           <p>Daniel Azubuine</p>
           <p>Composer, pianist, and software engineer.</p>
         </div>
-        <SocialLinks />
-        <p>© {new Date().getFullYear()}</p>
+        <div className='flex items-center gap-4'>
+          <SocialLinks />
+          <p>© {new Date().getFullYear()}</p>
+        </div>
       </div>
     </footer>
   )
