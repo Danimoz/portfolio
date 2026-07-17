@@ -19,12 +19,20 @@ cloudinary.config({
 class ActionInputError extends Error {}
 
 function actionFailure(error: unknown, fallbackMessage: string) {
+  const isDuplicateKeyError =
+    typeof error === 'object' && error !== null && 'code' in error && error.code === 11000
   const isInputError =
-    error instanceof ActionInputError || error instanceof mongoose.Error.ValidationError
+    error instanceof ActionInputError ||
+    error instanceof mongoose.Error.ValidationError ||
+    isDuplicateKeyError
 
   return {
     status: isInputError ? 400 : 500,
-    message: isInputError && error instanceof Error ? error.message : fallbackMessage,
+    message: isDuplicateKeyError
+      ? 'That Work Story slug is already in use.'
+      : isInputError && error instanceof Error
+        ? error.message
+        : fallbackMessage,
   }
 }
 
@@ -37,6 +45,15 @@ function requiredText(formData: FormData, field: string) {
 function optionalText(formData: FormData, field: string) {
   const value = formData.get(field)
   return typeof value === 'string' ? value.trim() : ''
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
 }
 
 async function uploadProjectImage(image: File) {
@@ -55,13 +72,26 @@ async function uploadProjectImage(image: File) {
 }
 
 function projectFields(formData: FormData, image: string) {
+  const name = requiredText(formData, 'name')
+  const story = formData.get('story') === 'true'
+  const requestedSlug = optionalText(formData, 'slug')
+  const slug = story ? slugify(requestedSlug || name) : undefined
+  const storyContent = story ? requiredText(formData, 'storyContent') : undefined
+
+  if (story && !slug) throw new ActionInputError('A valid Work Story slug is required')
+  if (storyContent && !storyContent.replace(/^##\s+.+$/gm, '').trim()) {
+    throw new ActionInputError('The Work Story needs content beneath at least one chapter')
+  }
+
   return {
-    name: requiredText(formData, 'name'),
+    name,
     description: requiredText(formData, 'description'),
     image,
     link: requiredText(formData, 'link'),
     tech: requiredText(formData, 'tech'),
     role: requiredText(formData, 'role'),
+    story,
+    ...(story ? { slug, storyContent } : {}),
   }
 }
 
@@ -116,8 +146,10 @@ export async function addProject(project: FormData){
     await connectToDb()
     const upload = await uploadProjectImage(image)
     uploadedPublicId = upload.public_id
-    await Project.create(projectFields(project, upload.secure_url))
+    const fields = projectFields(project, upload.secure_url)
+    await Project.create(fields)
     revalidatePath('/projects')
+    if (fields.story && fields.slug) revalidatePath(`/projects/${fields.slug}`)
     revalidatePath('/admin')
     return { status: 201, message: 'Project added successfully' }
   } catch(error) {
@@ -145,7 +177,11 @@ export async function updateProject(id: string, project: FormData) {
       image = upload.secure_url
     }
 
-    const updated = await Project.findByIdAndUpdate(id, projectFields(project, image), {
+    const fields = projectFields(project, image)
+    const update = fields.story
+      ? { $set: fields }
+      : { $set: fields, $unset: { slug: 1, storyContent: 1 } }
+    const updated = await Project.findByIdAndUpdate(id, update, {
       new: true,
       runValidators: true,
     })
@@ -153,6 +189,8 @@ export async function updateProject(id: string, project: FormData) {
 
     if (replacementPublicId) await removeCloudinaryImage(cloudinaryPublicId(existing.image))
     revalidatePath('/projects')
+    if (existing.slug) revalidatePath(`/projects/${existing.slug}`)
+    if (updated.story && updated.slug) revalidatePath(`/projects/${updated.slug}`)
     revalidatePath('/admin')
     return { status: 200, message: 'Project updated successfully' }
   } catch (error) {
@@ -184,6 +222,18 @@ export async function addComposition(composition: FormData){
   } catch (error) {
     console.error('Could not add composition:', error)
     return actionFailure(error, 'The composition could not be added because of a server error.')
+  }
+}
+
+export async function getProjectBySlug(slug: string) {
+  try {
+    await connectToDb()
+    const project: IProject | null = await Project.findOne({ story: true, slug })
+    if (!project) return { status: 404, data: null }
+    return { status: 200, data: project }
+  } catch (error) {
+    console.error('Could not load Work Story:', error)
+    return { status: 500, data: null }
   }
 }
 

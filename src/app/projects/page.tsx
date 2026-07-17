@@ -23,9 +23,17 @@ export default async function Projects() {
 
       {projects.length ? (
         <section className="project-grid" aria-label="Selected software projects">
-          {projects.map((project) => (
+          {projects.map((project) => {
+            const hasStory = Boolean(project.story)
+            const href = hasStory ? `/projects/${project.slug}` : project.link
+
+            return (
             <article className="project-entry reveal" key={project.name}>
-              <Link className="project-entry__image" href={project.link} aria-label={`View ${project.name}`}>
+              <Link
+                className="project-entry__image"
+                href={href}
+                aria-label={hasStory ? `Read the ${project.name} Work Story` : `View ${project.name}`}
+              >
                 <Image
                   src={project.image}
                   alt={`Preview of ${project.name}`}
@@ -45,10 +53,11 @@ export default async function Projects() {
                     <span key={tech}>{tech}</span>
                   ))}
                 </div>
-                <Link href={project.link}>View project</Link>
+                <Link href={href}>{hasStory ? 'Read Work Story' : 'View project'}</Link>
               </div>
             </article>
-          ))}
+            )
+          })}
         </section>
       ) : (
         <section className="empty-state">

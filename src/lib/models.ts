@@ -1,6 +1,10 @@
 import { IProject } from "@/types";
 import mongoose, { Schema, model } from "mongoose";
 
+function workStoryRequired(this: IProject): boolean {
+  return this.story === true
+}
+
 const projectSchema = new Schema<IProject>({
   name: { type: String, required: true },
   description: { type: String, required: true },
@@ -8,6 +12,19 @@ const projectSchema = new Schema<IProject>({
   link: { type: String, required: true },
   tech: { type: String, required: true },
   role: { type: String, required: true },
+  story: { type: Boolean, default: false },
+  slug: {
+    type: String,
+    trim: true,
+    lowercase: true,
+    unique: true,
+    sparse: true,
+    required: workStoryRequired,
+  },
+  storyContent: {
+    type: String,
+    required: workStoryRequired,
+  },
   date: { type: Date, default: Date.now },
 });
 

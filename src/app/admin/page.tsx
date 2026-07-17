@@ -43,6 +43,9 @@ export default async function AdminPage() {
         link: project.link,
         tech: project.tech,
         role: project.role,
+        story: project.story ?? false,
+        slug: project.slug ?? '',
+        storyContent: project.storyContent ?? '',
       },
     ]
   })

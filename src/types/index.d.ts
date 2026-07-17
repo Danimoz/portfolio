@@ -6,6 +6,9 @@ export type IProject = {
   link: string,
   tech: string,
   role: string,
+  story?: boolean,
+  slug?: string,
+  storyContent?: string,
   date: Date
 }
 

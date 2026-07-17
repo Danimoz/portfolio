@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { SubmitButton } from '@/components/SubmitButton'
 import { addProject, updateProject } from '@/lib/actions'
 import type { IProject } from '@/types'
@@ -9,6 +10,7 @@ export type EditableProject = Omit<IProject, '_id' | 'date'> & { _id: string }
 
 export default function ProjectForm({ project }: { project?: EditableProject }) {
   const formId = project ? `project-${project._id}` : 'new-project'
+  const [hasStory, setHasStory] = useState(Boolean(project?.story))
 
   async function action(formData: FormData) {
     const result = project ? await updateProject(project._id, formData) : await addProject(formData)
@@ -59,6 +61,47 @@ export default function ProjectForm({ project }: { project?: EditableProject }) 
         <input type="text" id={`${formId}-tech`} name="tech" defaultValue={project?.tech} required />
         <p>Separate technologies with commas.</p>
       </div>
+      <div className="field-group">
+        <label htmlFor={`${formId}-story`}>Work Story</label>
+        <select
+          id={`${formId}-story`}
+          name="story"
+          value={hasStory ? 'true' : 'false'}
+          onChange={(event) => setHasStory(event.target.value === 'true')}
+        >
+          <option value="false">Link directly to the project</option>
+          <option value="true">Publish an internal Work Story</option>
+        </select>
+        <p>Projects without a Work Story keep using their external project link.</p>
+      </div>
+      {hasStory ? (
+        <>
+          <div className="field-group">
+            <label htmlFor={`${formId}-slug`}>Work Story slug</label>
+            <input
+              type="text"
+              id={`${formId}-slug`}
+              name="slug"
+              defaultValue={project?.slug}
+              pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+              placeholder="solfa-streams"
+            />
+            <p>Leave empty to generate it from the project name.</p>
+          </div>
+          <div className="field-group">
+            <label htmlFor={`${formId}-story-content`}>Work Story</label>
+            <textarea
+              id={`${formId}-story-content`}
+              name="storyContent"
+              rows={16}
+              defaultValue={project?.storyContent}
+              placeholder={'## The problem\n\nExplain what needed to change.\n\n## The approach\n\nDescribe the important decisions.'}
+              required
+            />
+            <p>Start chapters with ## and separate paragraphs with a blank line.</p>
+          </div>
+        </>
+      ) : null}
       <SubmitButton
         buttonText={project ? 'Save project' : 'Add project'}
         pendingText={project ? 'Saving project' : 'Adding project'}
