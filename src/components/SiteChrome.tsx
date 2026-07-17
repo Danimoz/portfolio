@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast'
 import Footer from './Footer'
 import Navbar from './Navbar'
 import ResonanceField from './ResonanceField'
+import RevealOnScroll from './RevealOnScroll'
 
 export default function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -16,6 +17,7 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
         Skip to content
       </a>
       {isStudioConsole ? null : <ResonanceField />}
+      {isStudioConsole ? null : <RevealOnScroll />}
       {isStudioConsole ? null : <Navbar />}
       {children}
       {isStudioConsole ? null : <Footer />}

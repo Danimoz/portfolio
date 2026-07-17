@@ -28,7 +28,7 @@ export default async function Projects() {
             const href = hasStory ? `/projects/${project.slug}` : project.link
 
             return (
-            <article className="project-entry reveal" key={project.name}>
+            <article className="project-entry reveal" key={project.name} suppressHydrationWarning>
               <Link
                 className="project-entry__image"
                 href={href}

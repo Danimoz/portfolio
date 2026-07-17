@@ -49,6 +49,7 @@ export default async function MusicCatalog({
               className="composition-entry reveal"
               href={`/music-catalog/${composition._id}`}
               key={composition._id}
+              suppressHydrationWarning
             >
               <div>
                 <h2>{composition.title}</h2>

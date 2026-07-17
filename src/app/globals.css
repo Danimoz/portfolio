@@ -564,6 +564,7 @@ main,
   width: min(100%, var(--max-width));
   margin: 0 auto;
   padding: 0 var(--gutter) var(--section-space);
+  overflow-x: clip;
 }
 
 .mode-story {
@@ -1358,25 +1359,31 @@ main,
   }
 }
 
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .reveal {
-      animation: reveal-shift both var(--ease-out);
-      animation-timeline: view();
-      animation-range: entry 5% cover 32%;
-    }
-  }
-}
-
-@keyframes reveal-shift {
-  from {
-    opacity: 0;
-    transform: translateY(2rem);
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal-ready] .reveal {
+    opacity: var(--reveal-progress, 0);
+    transform: translateY(calc((1 - var(--reveal-progress, 0)) * 2rem));
+    will-change: opacity, transform;
   }
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  [data-reveal-ready] .mode-story--music.reveal {
+    transform:
+      translate3d(
+        calc((1 - var(--reveal-progress, 0)) * -3rem),
+        calc((1 - var(--reveal-progress, 0)) * 1rem),
+        0
+      )
+      scale(calc(0.985 + var(--reveal-progress, 0) * 0.015));
+  }
+
+  [data-reveal-ready] .mode-story--software.reveal {
+    transform:
+      translate3d(
+        calc((1 - var(--reveal-progress, 0)) * 3rem),
+        calc((1 - var(--reveal-progress, 0)) * 1rem),
+        0
+      )
+      scale(calc(0.985 + var(--reveal-progress, 0) * 0.015));
   }
 }
 

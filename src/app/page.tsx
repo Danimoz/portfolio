@@ -37,7 +37,7 @@ export default function Home() {
         </figure>
       </section>
 
-      <section className="practice-statement reveal">
+      <section className="practice-statement reveal" suppressHydrationWarning>
         <p>Different materials. The same attention.</p>
         <h2>
           I care about how an idea is structured, how it moves, and what remains after it reaches someone.
@@ -45,7 +45,7 @@ export default function Home() {
       </section>
 
       <section id="practice" className="practice-modes" aria-label="Areas of practice">
-        <article className="mode-story mode-story--music reveal">
+        <article className="mode-story mode-story--music reveal" suppressHydrationWarning>
           <div className="mode-story__media">
             <Image
               src={pianoMusic}
@@ -63,7 +63,7 @@ export default function Home() {
           </div>
         </article>
 
-        <article className="mode-story mode-story--software reveal">
+        <article className="mode-story mode-story--software reveal" suppressHydrationWarning>
           <div className="mode-story__copy">
             <p>Software</p>
             <h2>Digital products shaped with clarity.</h2>
@@ -82,7 +82,7 @@ export default function Home() {
         </article>
       </section>
 
-      <section className="home-conversation reveal">
+      <section className="home-conversation reveal" suppressHydrationWarning>
         <div>
           <p>Looking for a composer, engineer, or creative collaborator?</p>
           <h2>Bring me the question you cannot stop thinking about.</h2>

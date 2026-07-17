@@ -48,14 +48,14 @@ export default async function SingleComposition({ params }: Props) {
       </header>
 
       {composition.noteFromComposer ? (
-        <section className="composition-note reveal">
+        <section className="composition-note reveal" suppressHydrationWarning>
           <h2>From the composer</h2>
           <p>{composition.noteFromComposer}</p>
         </section>
       ) : null}
 
       {recordings.length ? (
-        <section className="recordings reveal" aria-labelledby="recordings-heading">
+        <section className="recordings reveal" aria-labelledby="recordings-heading" suppressHydrationWarning>
           <h2 id="recordings-heading">Listen</h2>
           <div className="recordings__grid">
             {recordings.map((link, index) => (
@@ -73,7 +73,7 @@ export default async function SingleComposition({ params }: Props) {
       ) : null}
 
       {composition.scorePurchaseLinks?.length ? (
-        <section className={`${styles.score} reveal`} aria-labelledby="score-heading">
+        <section className={`${styles.score} reveal`} aria-labelledby="score-heading" suppressHydrationWarning>
           <div>
             <p className={styles.eyebrow}>Published edition</p>
             <h2 id="score-heading">Purchase the score</h2>
@@ -91,7 +91,7 @@ export default async function SingleComposition({ params }: Props) {
       ) : null}
 
       {composition.compositionText ? (
-        <section className="composition-text reveal">
+        <section className="composition-text reveal" suppressHydrationWarning>
           <h2>Text</h2>
           <p>{composition.compositionText}</p>
         </section>
