@@ -1,27 +1,33 @@
 'use client'
 
-import type { JSONContent } from '@tiptap/core'
+import { generateHTML, type JSONContent } from '@tiptap/core'
 import { EditorContent, useEditor } from '@tiptap/react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { uploadStoryImage } from '@/lib/actions'
 import { workStoryExtensions } from '@/lib/workStoryExtensions'
 import { hasWorkStoryContent } from '@/lib/workStory'
 import styles from './workStoryEditor.module.css'
+import WorkStoryPreview, { type WorkStoryPreviewData } from './workStoryPreview'
 
 type WorkStoryEditorProps = {
   id: string
   initialContent: JSONContent
+  existingImage?: string
 }
 
-export default function WorkStoryEditor({ id, initialContent }: WorkStoryEditorProps) {
+export default function WorkStoryEditor({ id, initialContent, existingImage }: WorkStoryEditorProps) {
   const [document, setDocument] = useState(initialContent)
   const [linkUrl, setLinkUrl] = useState('')
   const [imageAlt, setImageAlt] = useState('')
   const [showLinkTools, setShowLinkTools] = useState(false)
   const [showImageTools, setShowImageTools] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [preview, setPreview] = useState<WorkStoryPreviewData | null>(null)
   const imageInput = useRef<HTMLInputElement>(null)
+  const editorShell = useRef<HTMLDivElement>(null)
+  const previewDialog = useRef<HTMLDialogElement>(null)
+  const previewObjectUrl = useRef<string | null>(null)
   const editor = useEditor({
     extensions: workStoryExtensions,
     content: initialContent,
@@ -33,6 +39,61 @@ export default function WorkStoryEditor({ id, initialContent }: WorkStoryEditorP
     },
     onUpdate: ({ editor: currentEditor }) => setDocument(currentEditor.getJSON()),
   })
+
+  useEffect(() => () => {
+    if (previewObjectUrl.current) URL.revokeObjectURL(previewObjectUrl.current)
+  }, [])
+
+  function openPreview() {
+    const form = editorShell.current?.closest('form')
+    if (!form) return
+
+    const formData = new FormData(form)
+    const textValue = (field: string) => {
+      const value = formData.get(field)
+      return typeof value === 'string' ? value.trim() : ''
+    }
+    const selectedImage = formData.get('image')
+
+    if (previewObjectUrl.current) {
+      URL.revokeObjectURL(previewObjectUrl.current)
+      previewObjectUrl.current = null
+    }
+
+    let image = existingImage
+    if (selectedImage instanceof File && selectedImage.size > 0) {
+      image = URL.createObjectURL(selectedImage)
+      previewObjectUrl.current = image
+    }
+
+    let storyHtml = ''
+    try {
+      storyHtml = hasWorkStoryContent(document)
+        ? generateHTML(document, workStoryExtensions)
+        : ''
+    } catch {
+      storyHtml = ''
+    }
+
+    setPreview({
+      name: textValue('name') || 'Untitled Work Story',
+      description: textValue('description'),
+      role: textValue('role'),
+      technologies: textValue('tech').split(',').map((technology) => technology.trim()).filter(Boolean),
+      image,
+      storyHtml,
+    })
+
+    requestAnimationFrame(() => {
+      if (previewDialog.current && !previewDialog.current.open) previewDialog.current.showModal()
+    })
+  }
+
+  function closePreview() {
+    if (previewObjectUrl.current) URL.revokeObjectURL(previewObjectUrl.current)
+    previewObjectUrl.current = null
+    setPreview(null)
+  }
 
   function applyLink() {
     if (!editor) return
@@ -91,7 +152,7 @@ export default function WorkStoryEditor({ id, initialContent }: WorkStoryEditorP
   ]
 
   return (
-    <div className={styles.editorShell}>
+    <div ref={editorShell} className={styles.editorShell}>
       <input type="hidden" id={id} name="storyDocument" value={JSON.stringify(document)} />
       <div className={styles.toolbar} role="toolbar" aria-label="Work Story formatting">
         {toolbarItems.map((item) => (
@@ -132,6 +193,9 @@ export default function WorkStoryEditor({ id, initialContent }: WorkStoryEditorP
         </button>
         <button type="button" onClick={() => editor?.chain().focus().redo().run()} disabled={!editor?.can().redo()}>
           Redo
+        </button>
+        <button type="button" className={styles.previewButton} onClick={openPreview}>
+          Preview story
         </button>
       </div>
 
@@ -180,6 +244,12 @@ export default function WorkStoryEditor({ id, initialContent }: WorkStoryEditorP
         data-empty={!hasWorkStoryContent(document)}
       />
       <p className={styles.hint}>Use H2 for chapters and H3 for sections. Every image needs a useful description.</p>
+      <WorkStoryPreview
+        dialogRef={previewDialog}
+        titleId={`${id}-preview-title`}
+        preview={preview}
+        onClose={closePreview}
+      />
     </div>
   )
 }

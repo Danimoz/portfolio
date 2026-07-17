@@ -137,6 +137,26 @@
   gap: 0.6rem;
 }
 
+.richStory ul {
+  list-style: disc;
+}
+
+.richStory ol {
+  list-style: decimal;
+}
+
+.richStory ul ul {
+  list-style: circle;
+}
+
+.richStory li::marker {
+  color: var(--accent);
+}
+
+.richStory li p {
+  margin: 0;
+}
+
 .richStory blockquote {
   margin-top: clamp(3rem, 6vw, 5rem);
   margin-bottom: clamp(3rem, 6vw, 5rem);

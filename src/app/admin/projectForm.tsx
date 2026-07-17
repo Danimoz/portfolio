@@ -98,6 +98,7 @@ export default function ProjectForm({ project }: { project?: EditableProject }) 
                 project?.storyDocument ??
                 legacyStoryToDocument(project?.storyContent ?? '')
               }
+              existingImage={project?.image}
             />
             <p>The authoring guide in docs/work-stories.md includes the full chapter structure.</p>
           </div>
