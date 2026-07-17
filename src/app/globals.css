@@ -1368,22 +1368,16 @@ main,
 
   [data-reveal-ready] .mode-story--music.reveal {
     transform:
-      translate3d(
-        calc((1 - var(--reveal-progress, 0)) * -3rem),
+      translate3d(calc((1 - var(--reveal-progress, 0)) * -3rem),
         calc((1 - var(--reveal-progress, 0)) * 1rem),
-        0
-      )
-      scale(calc(0.985 + var(--reveal-progress, 0) * 0.015));
+        0) scale(calc(0.985 + var(--reveal-progress, 0) * 0.015));
   }
 
   [data-reveal-ready] .mode-story--software.reveal {
     transform:
-      translate3d(
-        calc((1 - var(--reveal-progress, 0)) * 3rem),
+      translate3d(calc((1 - var(--reveal-progress, 0)) * 3rem),
         calc((1 - var(--reveal-progress, 0)) * 1rem),
-        0
-      )
-      scale(calc(0.985 + var(--reveal-progress, 0) * 0.015));
+        0) scale(calc(0.985 + var(--reveal-progress, 0) * 0.015));
   }
 }
 
