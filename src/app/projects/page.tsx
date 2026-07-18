@@ -3,11 +3,25 @@ import Image from 'next/image'
 import Link from 'next/link'
 import PageIntro from '@/components/PageIntro'
 import { getProjects } from '@/lib/actions'
+import { DEFAULT_OG_IMAGE } from '@/lib/seo'
 import { separateStringWithCommas } from '@/lib/utils'
 
 export const metadata: Metadata = {
   title: 'Software Projects',
   description: 'Selected software projects by Daniel Azubuine.',
+  alternates: { canonical: '/projects' },
+  openGraph: {
+    title: 'Software Projects',
+    description: 'Selected software projects by Daniel Azubuine.',
+    url: '/projects',
+    images: [{ url: DEFAULT_OG_IMAGE, alt: 'Daniel Azubuine' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Software Projects',
+    description: 'Selected software projects by Daniel Azubuine.',
+    images: [DEFAULT_OG_IMAGE],
+  },
 }
 
 export default async function Projects() {

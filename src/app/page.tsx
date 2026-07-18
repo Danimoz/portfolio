@@ -1,8 +1,26 @@
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import dan from '@images/hero-portrait.jpg'
 import pianoMusic from '@images/pianomusic.jpg'
 import software from '@images/software.jpg'
+import { DEFAULT_DESCRIPTION, DEFAULT_OG_IMAGE } from '@/lib/seo'
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+  openGraph: {
+    title: 'Daniel Azubuine | Music and Software',
+    description: DEFAULT_DESCRIPTION,
+    url: '/',
+    images: [{ url: DEFAULT_OG_IMAGE, alt: 'Daniel Azubuine' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Daniel Azubuine | Music and Software',
+    description: DEFAULT_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
+  },
+}
 
 export default function Home() {
   return (

@@ -2,12 +2,26 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import PageIntro from '@/components/PageIntro'
 import { getCategories, getCompositions } from '@/lib/actions'
+import { DEFAULT_OG_IMAGE } from '@/lib/seo'
 import CompositionCategories from './categories'
 import CompositionSearch from './search'
 
 export const metadata: Metadata = {
   title: 'Music Catalog',
   description: 'Compositions and musical works by Daniel Azubuine.',
+  alternates: { canonical: '/music-catalog' },
+  openGraph: {
+    title: 'Music Catalog',
+    description: 'Compositions and musical works by Daniel Azubuine.',
+    url: '/music-catalog',
+    images: [{ url: DEFAULT_OG_IMAGE, alt: 'Daniel Azubuine' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Music Catalog',
+    description: 'Compositions and musical works by Daniel Azubuine.',
+    images: [DEFAULT_OG_IMAGE],
+  },
 }
 
 export default async function MusicCatalog({

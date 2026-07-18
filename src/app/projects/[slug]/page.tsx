@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { cache } from 'react'
 import { getProjectBySlug } from '@/lib/actions'
+import { absoluteUrl, serializeJsonLd, truncateDescription } from '@/lib/seo'
 import { separateStringWithCommas } from '@/lib/utils'
 import { parseWorkStory } from '@/lib/workStory'
 import { workStoryExtensions } from '@/lib/workStoryExtensions'
@@ -25,13 +26,26 @@ export async function generateMetadata({ params }: WorkStoryPageProps): Promise<
 
   if (!project) return { title: 'Work Story not found' }
 
+  const title = `${project.name} — Work Story`
+  const description = truncateDescription(project.description)
+  const url = `/projects/${project.slug}`
+
   return {
-    title: `${project.name} — Work Story`,
-    description: project.description,
+    title,
+    description,
+    alternates: { canonical: url },
     openGraph: {
-      title: `${project.name} — Work Story`,
-      description: project.description,
+      type: 'article',
+      title,
+      description,
+      url,
       images: [{ url: project.image, alt: `Preview of ${project.name}` }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [project.image],
     },
   }
 }
@@ -47,9 +61,44 @@ export default async function WorkStoryPage({ params }: WorkStoryPageProps) {
     ? generateHTML(project.storyDocument, workStoryExtensions)
     : null
   const technologies = separateStringWithCommas(project.tech)
+  const canonicalUrl = absoluteUrl(`/projects/${project.slug}`)
+  const structuredData = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'CreativeWork',
+      '@id': `${canonicalUrl}#work-story`,
+      name: `${project.name} Work Story`,
+      headline: project.name,
+      description: truncateDescription(project.description),
+      url: canonicalUrl,
+      image: project.image,
+      creator: { '@id': 'https://danielazubuine.me/#daniel-azubuine' },
+      about: {
+        '@type': 'SoftwareApplication',
+        name: project.name,
+        applicationCategory: 'SoftwareApplication',
+        url: project.link,
+        description: truncateDescription(project.description),
+      },
+      keywords: technologies,
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: absoluteUrl('/') },
+        { '@type': 'ListItem', position: 2, name: 'Software Projects', item: absoluteUrl('/projects') },
+        { '@type': 'ListItem', position: 3, name: project.name, item: canonicalUrl },
+      ],
+    },
+  ]
 
   return (
     <main id="main-content" className={styles.story}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }}
+      />
       <header className={styles.header}>
         <Link href="/projects" className={styles.backLink}>← Software Projects</Link>
         <div className={styles.titleRow}>
