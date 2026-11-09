@@ -53,13 +53,13 @@ export default function WorkStoryPreview({ dialogRef, titleId, preview, onClose 
             <span className={storyStyles.backLink}>← Software Projects</span>
             <div className={storyStyles.titleRow}>
               <div>
-                <p className={storyStyles.mode}>Software Work Story</p>
+                <p className={storyStyles.mode}>Project story</p>
                 <h1>{name}</h1>
               </div>
               <span className={`button ${styles.inertButton}`}>Visit project</span>
             </div>
             <p className={storyStyles.lede}>
-              {preview?.description || 'Add a project description to preview the opening statement.'}
+              {preview?.description || 'Add a project description to see it here.'}
             </p>
             <dl className={storyStyles.metadata}>
               <div>
@@ -86,7 +86,7 @@ export default function WorkStoryPreview({ dialogRef, titleId, preview, onClose 
             </figure>
           ) : (
             <div className={`${storyStyles.heroMedia} ${styles.emptyMedia}`}>
-              <span>Choose a project image to preview the hero.</span>
+              <span>Choose a project image to see it here.</span>
             </div>
           )}
 
@@ -98,13 +98,13 @@ export default function WorkStoryPreview({ dialogRef, titleId, preview, onClose 
             />
           ) : (
             <section className={styles.emptyStory} aria-label="Empty story preview">
-              <h2>The story canvas is still empty.</h2>
-              <p>Add a chapter and its supporting detail in the editor, then preview again.</p>
+              <h2>No story content yet.</h2>
+              <p>Write your story in the editor, then preview again.</p>
             </section>
           )}
 
           <footer className={storyStyles.endMatter}>
-            <p>Explore the product or continue through the software archive.</p>
+            <p>Try this project or browse more of my work.</p>
             <div>
               <span className={styles.previewLink}>Visit {name}</span>
               <span className={styles.previewLink}>All Software Projects</span>

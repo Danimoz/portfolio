@@ -90,7 +90,7 @@ export default function CompositionForm({
         />
       </div>
       <div className="field-group">
-        <label htmlFor={`${formId}-youtube`}>YouTube embed links</label>
+        <label htmlFor={`${formId}-youtube`}>YouTube video links</label>
         <input
           type="text"
           id={`${formId}-youtube`}
@@ -110,7 +110,7 @@ export default function CompositionForm({
             .join('\n')}
           placeholder={'Publisher name | https://publisher.example/score\nDigital edition | https://example.com/score'}
         />
-        <p>One purchase destination per line. Leave empty when the score is not yet available.</p>
+        <p>Add one link per line as Publisher name | URL. Leave empty if the score is not available.</p>
       </div>
       <div className="field-group">
         <label htmlFor={`${formId}-categories`}>Categories</label>

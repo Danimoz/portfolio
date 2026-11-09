@@ -33,7 +33,7 @@ export default function ContactForm() {
       <div className="field-group">
         <label htmlFor="message">What would you like to discuss?</label>
         <textarea id="message" name="message" rows={7} required />
-        <p>Include useful context, timing, and any link I should see.</p>
+        <p>Share a few details, any deadlines, and relevant links.</p>
       </div>
 
       <SubmitButton buttonText="Send message" pendingText="Sending" />

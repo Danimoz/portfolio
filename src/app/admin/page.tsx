@@ -61,7 +61,7 @@ export default async function AdminPage() {
     <main id="main-content" className="page-shell studio-console">
       <header className="studio-console__header">
         <p>Studio Console</p>
-        <h1>Manage the work behind the portfolio.</h1>
+        <h1>Manage your portfolio</h1>
       </header>
 
       <section className="studio-console__grid">

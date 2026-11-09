@@ -258,7 +258,7 @@ export default function WorkStoryEditor({ id, initialContent, existingImage }: W
 
       {showLinkTools ? (
         <div className={styles.inlineTools}>
-          <label htmlFor={`${id}-link`}>Link destination</label>
+          <label htmlFor={`${id}-link`}>Link URL</label>
           <input
             id={`${id}-link`}
             type="url"
@@ -266,9 +266,9 @@ export default function WorkStoryEditor({ id, initialContent, existingImage }: W
             onChange={(event) => setLinkUrl(event.target.value)}
             placeholder="https://example.com"
           />
-          <button type="button" onClick={applyLink}>Apply</button>
+          <button type="button" onClick={applyLink}>Apply link</button>
           {editor?.isActive('link') ? (
-            <button type="button" onClick={() => editor.chain().focus().unsetLink().run()}>Remove</button>
+            <button type="button" onClick={() => editor.chain().focus().unsetLink().run()}>Remove link</button>
           ) : null}
         </div>
       ) : null}
@@ -326,7 +326,7 @@ export default function WorkStoryEditor({ id, initialContent, existingImage }: W
                 setVideoTitle('')
               }}
             >
-              Remove
+              Remove video
             </button>
           ) : null}
         </div>

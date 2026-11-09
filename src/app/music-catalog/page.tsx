@@ -46,9 +46,9 @@ export default async function MusicCatalog({
   return (
     <main id="main-content" className="page-shell">
       <PageIntro
-        label="Music Mode"
-        title="Works for voices, instruments, and attention."
-        description="Browse compositions by title or category, then enter each work for its notes, text, instrumentation, and recordings."
+        label="Music"
+        title="My compositions"
+        description="Find a piece, listen to recordings, and browse scores."
       />
 
       <section className="catalog-tools" aria-label="Catalog filters">
@@ -77,8 +77,8 @@ export default async function MusicCatalog({
         </section>
       ) : (
         <section className="empty-state">
-          <h2>No works match this view.</h2>
-          <p>Clear the search or choose another category to return to the full catalog.</p>
+          <h2>No compositions found.</h2>
+          <p>Try another search or change the category filter.</p>
         </section>
       )}
     </main>

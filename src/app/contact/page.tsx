@@ -28,8 +28,8 @@ export default function Contact() {
     <main id="main-content" className="page-shell">
       <PageIntro
         label="Contact"
-        title="A good collaboration starts with a clear question."
-        description="Tell me what you are making, what is unresolved, and why the work matters now."
+        title="Start a conversation"
+        description="Tell me about your project or ask a question."
       />
 
       <section className="contact-layout">
@@ -38,7 +38,7 @@ export default function Contact() {
           <div>
             <h2>What we can discuss</h2>
             <p>
-              Software roles, product engineering, original composition, arranging, performance, and work that crosses disciplines.
+              Software projects and roles, music commissions, arrangements, and performances.
             </p>
             <SocialLinks />
           </div>

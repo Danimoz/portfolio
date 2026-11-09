@@ -5,7 +5,7 @@ export default function Footer() {
   return (
     <footer className="site-footer">
       <div className="site-footer__lead">
-        <p>Have a role, score, performance, or product in mind?</p>
+        <p>Want to work together?</p>
         <Link href="/contact">Start a conversation</Link>
       </div>
 

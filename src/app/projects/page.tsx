@@ -30,9 +30,9 @@ export default async function Projects() {
   return (
     <main id="main-content" className="page-shell">
       <PageIntro
-        label="Software Mode"
-        title="Software shaped around real problems."
-        description="Selected products and engineering work, with the role, tools, and decisions behind each result."
+        label="Software"
+        title="My software projects"
+        description="What I’ve built, my role, and the tools I used."
       />
 
       {projects.length ? (
@@ -46,7 +46,7 @@ export default async function Projects() {
                 <Link
                   className="project-entry__image"
                   href={href}
-                  aria-label={hasStory ? `Read the ${project.name} Work Story` : `View ${project.name}`}
+                  aria-label={hasStory ? `Read about ${project.name}` : `View ${project.name}`}
                 >
                   <Image
                     src={project.image}
@@ -67,7 +67,7 @@ export default async function Projects() {
                       <span key={tech}>{tech}</span>
                     ))}
                   </div>
-                  <Link href={href}>{hasStory ? 'Read Work Story' : 'View project'}</Link>
+                  <Link href={href}>{hasStory ? 'Read project story' : 'View project'}</Link>
                 </div>
               </article>
             )
@@ -75,8 +75,8 @@ export default async function Projects() {
         </section>
       ) : (
         <section className="empty-state">
-          <h2>Project stories are being prepared.</h2>
-          <p>The new software archive will pair each result with the problem, process, and evidence behind it.</p>
+          <h2>No projects to show yet.</h2>
+          <p>Check back for new projects.</p>
         </section>
       )}
     </main>

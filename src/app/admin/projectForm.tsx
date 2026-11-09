@@ -72,14 +72,14 @@ export default function ProjectForm({ project }: { project?: EditableProject }) 
           onChange={(event) => setHasStory(event.target.value === 'true')}
         >
           <option value="false">Link directly to the project</option>
-          <option value="true">Publish an internal Work Story</option>
+          <option value="true">Publish a story on this site</option>
         </select>
-        <p>Projects without a Work Story keep using their external project link.</p>
+        <p>Choose where visitors go when they open this project.</p>
       </div>
       {hasStory ? (
         <>
           <div className="field-group">
-            <label htmlFor={`${formId}-slug`}>Work Story slug</label>
+            <label htmlFor={`${formId}-slug`}>Story URL slug</label>
             <input
               type="text"
               id={`${formId}-slug`}
@@ -88,7 +88,7 @@ export default function ProjectForm({ project }: { project?: EditableProject }) 
               pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
               placeholder="solfa-streams"
             />
-            <p>Leave empty to generate it from the project name.</p>
+            <p>Used in /projects/your-slug. Leave empty to use the project name.</p>
           </div>
           <div className="field-group">
             <label htmlFor={`${formId}-story-document`}>Work Story</label>
@@ -100,7 +100,7 @@ export default function ProjectForm({ project }: { project?: EditableProject }) 
               }
               existingImage={project?.image}
             />
-            <p>The authoring guide in docs/work-stories.md includes the full chapter structure.</p>
+            <p>See docs/work-stories.md for a suggested story outline.</p>
           </div>
         </>
       ) : null}

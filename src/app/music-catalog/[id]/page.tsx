@@ -19,8 +19,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = data.title
   const description = truncateDescription(
     data.noteFromComposer ||
-      data.compositionText ||
-      `${data.title}, a composition by Daniel Azubuine for ${data.instrumentation}.`,
+    data.compositionText ||
+    `${data.title}, a composition by Daniel Azubuine for ${data.instrumentation}.`,
   )
 
   return {
@@ -48,18 +48,18 @@ export default async function SingleComposition({ params }: Props) {
 
   const recordings = composition.youtubeLinks
     ? separateStringWithCommas(composition.youtubeLinks)
-        .map((link) => {
-          const videoId = getYouTubeVideoId(link)
-          const embedUrl = videoId ? getYouTubeEmbedUrl(videoId) : null
-          return videoId && embedUrl ? { videoId, embedUrl } : null
-        })
-        .filter((recording): recording is { videoId: string; embedUrl: string } => Boolean(recording))
+      .map((link) => {
+        const videoId = getYouTubeVideoId(link)
+        const embedUrl = videoId ? getYouTubeEmbedUrl(videoId) : null
+        return videoId && embedUrl ? { videoId, embedUrl } : null
+      })
+      .filter((recording): recording is { videoId: string; embedUrl: string } => Boolean(recording))
     : []
   const canonicalUrl = absoluteUrl(`/music-catalog/${composition._id}`)
   const description = truncateDescription(
     composition.noteFromComposer ||
-      composition.compositionText ||
-      `${composition.title}, a composition by Daniel Azubuine for ${composition.instrumentation}.`,
+    composition.compositionText ||
+    `${composition.title}, a composition by Daniel Azubuine for ${composition.instrumentation}.`,
   )
   const structuredData = [
     {
@@ -103,7 +103,7 @@ export default async function SingleComposition({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }}
       />
       <header className="composition-hero">
-        <Link href="/music-catalog">Back to the catalog</Link>
+        <Link href="/music-catalog">All compositions</Link>
         <h1>{composition.title}</h1>
         <p>{composition.instrumentation}</p>
         <dl>
@@ -120,7 +120,7 @@ export default async function SingleComposition({ params }: Props) {
 
       {composition.noteFromComposer ? (
         <section className="composition-note reveal" suppressHydrationWarning>
-          <h2>From the composer</h2>
+          <h2>About this piece</h2>
           <p>{composition.noteFromComposer}</p>
         </section>
       ) : null}
@@ -148,8 +148,8 @@ export default async function SingleComposition({ params }: Props) {
         <section className={`${styles.score} reveal`} aria-labelledby="score-heading" suppressHydrationWarning>
           <div>
             <p className={styles.eyebrow}>Published edition</p>
-            <h2 id="score-heading">Purchase the score</h2>
-            <p>Choose a publisher or edition to continue to its secure storefront.</p>
+            <h2 id="score-heading">Buy the score</h2>
+            <p>Choose a publisher or edition to buy the score on their website.</p>
           </div>
           <div className={styles.links}>
             {composition.scorePurchaseLinks.map((link) => (

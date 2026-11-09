@@ -24,9 +24,9 @@ export async function generateMetadata({ params }: WorkStoryPageProps): Promise<
   const { slug } = await params
   const project = await loadWorkStory(slug)
 
-  if (!project) return { title: 'Work Story not found' }
+  if (!project) return { title: 'Project story not found' }
 
-  const title = `${project.name} — Work Story`
+  const title = `${project.name} — Project story`
   const description = truncateDescription(project.description)
   const url = `/projects/${project.slug}`
 
@@ -103,7 +103,7 @@ export default async function WorkStoryPage({ params }: WorkStoryPageProps) {
         <Link href="/projects" className={styles.backLink}>← Software Projects</Link>
         <div className={styles.titleRow}>
           <div>
-            <p className={styles.mode}>Software Work Story</p>
+            <p className={styles.mode}>Project story</p>
             <h1>{project.name}</h1>
           </div>
           <a className="button" href={project.link} target="_blank" rel="noreferrer">
@@ -156,7 +156,7 @@ export default async function WorkStoryPage({ params }: WorkStoryPageProps) {
       )}
 
       <footer className={styles.endMatter}>
-        <p>Explore the product or continue through the software archive.</p>
+        <p>Try this project or browse more of my work.</p>
         <div>
           <a href={project.link} target="_blank" rel="noreferrer">Visit {project.name}</a>
           <Link href="/projects">All Software Projects</Link>

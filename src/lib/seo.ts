@@ -1,7 +1,7 @@
 export const SITE_URL = 'https://danielazubuine.me'
 export const SITE_NAME = 'Daniel Azubuine'
 export const DEFAULT_DESCRIPTION =
-  'The creative practice of Daniel Azubuine, a composer, pianist, and software engineer shaping expressive work in sound and software.'
+  'Daniel Azubuine is a composer, pianist, software engineer, and founder of Solfa Streams. Explore his music and software projects.'
 export const DEFAULT_OG_IMAGE = '/images/hero-portrait.jpg'
 
 export function absoluteUrl(path = '/') {

@@ -29,11 +29,11 @@ export default function Home() {
         <div className="home-hero__copy">
           <p className="home-hero__label">Daniel Azubuine</p>
           <h1>
-            Sound, software,
-            <span>one creative practice.</span>
+            Composer, pianist,
+            <span>software engineer.</span>
           </h1>
           <p className="home-hero__summary">
-            Founder of Solfa Streams. Daniel composes music and builds software with structure, feeling, and consequence.
+            Founder of Solfa Streams.
           </p>
           <div className="button-row">
             <Link className="button button--primary" href="#practice">
@@ -55,13 +55,6 @@ export default function Home() {
         </figure>
       </section>
 
-      <section className="practice-statement reveal" suppressHydrationWarning>
-        <p>Different materials. The same attention.</p>
-        <h2>
-          I care about how an idea is structured, how it moves, and what remains after it reaches someone.
-        </h2>
-      </section>
-
       <section id="practice" className="practice-modes" aria-label="Areas of practice">
         <article className="mode-story mode-story--music reveal" suppressHydrationWarning>
           <div className="mode-story__media">
@@ -73,22 +66,22 @@ export default function Home() {
           </div>
           <div className="mode-story__copy">
             <p>Music</p>
-            <h2>Compositions built to be lived in.</h2>
+            <h2>My compositions</h2>
             <p>
-              Explore concert works, recordings, instrumentation, texts, and the stories behind each piece.
+              Listen to my music and find scores.
             </p>
-            <Link href="/music-catalog">Enter Music Mode</Link>
+            <Link href="/music-catalog">Browse compositions</Link>
           </div>
         </article>
 
         <article className="mode-story mode-story--software reveal" suppressHydrationWarning>
           <div className="mode-story__copy">
             <p>Software</p>
-            <h2>Digital products shaped with clarity.</h2>
+            <h2>My software projects</h2>
             <p>
-              See selected engineering work, the problems it addresses, and the thinking behind the result.
+              Explore what I build and how it works.
             </p>
-            <Link href="/projects">Enter Software Mode</Link>
+            <Link href="/projects">View projects</Link>
           </div>
           <div className="mode-story__media">
             <Image
@@ -102,8 +95,8 @@ export default function Home() {
 
       <section className="home-conversation reveal" suppressHydrationWarning>
         <div>
-          <p>Looking for a composer, engineer, or creative collaborator?</p>
-          <h2>Bring me the question you cannot stop thinking about.</h2>
+          <p>Have a project in mind?</p>
+          <h2>Let’s work together.</h2>
         </div>
         <Link className="button button--primary" href="/contact">
           Start a conversation
