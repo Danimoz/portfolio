@@ -5,6 +5,7 @@ import dan from '@images/hero-portrait.jpg'
 import pianoMusic from '@images/pianomusic.jpg'
 import software from '@images/software.jpg'
 import { DEFAULT_DESCRIPTION, DEFAULT_OG_IMAGE } from '@/lib/seo'
+import HeroIdentity from '@/components/HeroIdentity'
 
 export const metadata: Metadata = {
   alternates: { canonical: '/' },
@@ -28,10 +29,7 @@ export default function Home() {
       <section className="home-hero">
         <div className="home-hero__copy">
           <p className="home-hero__label">Daniel Azubuine</p>
-          <h1>
-            Composer, pianist,
-            <span>software engineer.</span>
-          </h1>
+          <HeroIdentity />
           <p className="home-hero__summary">
             Founder of Solfa Streams.
           </p>
