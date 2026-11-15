@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import PageIntro from '@/components/PageIntro'
 import SocialLinks from '@/components/socialLinks'
 import { DEFAULT_OG_IMAGE } from '@/lib/seo'
@@ -40,6 +41,7 @@ export default function Contact() {
             <p>
               Software projects and roles, music commissions, arrangements, and performances.
             </p>
+            <p>Planning new music? <Link href="/commissions">Explore music commissions</Link></p>
             <SocialLinks />
           </div>
         </div>

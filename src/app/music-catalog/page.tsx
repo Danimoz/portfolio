@@ -51,6 +51,8 @@ export default async function MusicCatalog({
         description="Find a piece, listen to recordings, and browse scores."
       />
 
+      <p className="catalog-commission-link">Want a new piece, arrangement, or orchestration? <Link href="/commissions">Commission music</Link></p>
+
       <section className="catalog-tools" aria-label="Catalog filters">
         <CompositionSearch search={search} />
         <CompositionCategories categories={serializedCategories} />

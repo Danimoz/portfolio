@@ -197,7 +197,7 @@ export default function ResonanceField() {
   const sectionTarget = useRef(0)
   const renderStaticFrame = useRef<(() => void) | null>(null)
   const pathname = usePathname()
-  const mode = pathname.startsWith('/music-catalog') ? 1 : 0
+  const mode = pathname.startsWith('/music-catalog') || pathname.startsWith('/commissions') ? 1 : 0
   const modeTarget = useRef(mode)
   const [sonicState, setSonicState] = useState<SonicState>('off')
   const [contextEpoch, setContextEpoch] = useState(0)

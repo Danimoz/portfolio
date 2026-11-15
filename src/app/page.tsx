@@ -69,6 +69,7 @@ export default function Home() {
               Listen to my music and find scores.
             </p>
             <Link href="/music-catalog">Browse compositions</Link>
+            <Link className="commission-discovery" href="/commissions">Commission music</Link>
           </div>
         </article>
 

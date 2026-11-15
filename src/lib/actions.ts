@@ -13,6 +13,7 @@ import { getWorkStoryImages, getWorkStoryYouTubeVideos, hasWorkStoryBody } from 
 import { generateHTML } from '@tiptap/html';
 import { workStoryExtensions } from './workStoryExtensions';
 import { getYouTubeVideoId } from './youtube';
+import { buildContactEnquiry, ContactEnquiryError } from './contactEnquiry';
 
           
 cloudinary.config({ 
@@ -425,24 +426,22 @@ export async function getCategories(){
 
 
 export async function sendEmail(data: FormData){
-  const resend = new Resend(process.env.RESEND_API_KEY as string)
-  const name = data.get('name') as string
-  const email = data.get('email') as string
-  const message = data.get('message') as string
-  
   try {
-    await resend.emails.send({
+    const { name, email, message, subject } = buildContactEnquiry(data)
+    const resend = new Resend(process.env.RESEND_API_KEY as string)
+    const result = await resend.emails.send({
       from: 'Danny <onboarding@resend.dev>',
       to: [`${process.env.EMAIL_USERNAME}`],
-      subject: `Contact Message from ${name}`,
+      subject,
       react: EmailTemplate({ name, email, message }),
       reply_to: email,
-      html: `<p style='whitespace: pre-line; font-size: 18px;'>${email} <br /> <br />${message} </p>`
     })
+
+    if (result.error) return { status: 502, message: 'Your message could not be sent. Please try again.' }
 
     return { status: 200, message: 'Email sent successfully!' }
   } catch (error) {
-    console.log(error)
-    return { status: 400, message: 'An error occured' }
+    if (error instanceof ContactEnquiryError) return { status: 400, message: error.message }
+    return { status: 500, message: 'Your message could not be sent. Please try again.' }
   }
 }

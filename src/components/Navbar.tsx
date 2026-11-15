@@ -10,6 +10,7 @@ const navigation = [
   { name: 'Home', href: '/' },
   { name: 'Software', href: '/projects' },
   { name: 'Music', href: '/music-catalog' },
+  { name: 'Commissions', href: '/commissions' },
   { name: 'Writing', href: 'https://dflat.hashnode.dev/' },
 ]
 

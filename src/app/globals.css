@@ -615,6 +615,23 @@ main,
   text-decoration-color: var(--accent);
 }
 
+.mode-story__copy .commission-discovery {
+  display: inline-block;
+  margin-inline-start: 1.5rem;
+}
+
+.catalog-commission-link {
+  margin: -1.5rem 0 2.5rem;
+  color: var(--ink-soft);
+  line-height: 1.7;
+}
+
+.catalog-commission-link a {
+  color: var(--ink);
+  font-weight: 650;
+  text-decoration-color: var(--accent);
+}
+
 .home-conversation {
   display: grid;
   width: min(calc(100% - (2 * var(--gutter))), calc(var(--max-width) - (2 * var(--gutter))));
