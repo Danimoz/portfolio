@@ -14,6 +14,7 @@ import { generateHTML } from '@tiptap/html';
 import { workStoryExtensions } from './workStoryExtensions';
 import { getYouTubeVideoId } from './youtube';
 import { buildContactEnquiry, ContactEnquiryError } from './contactEnquiry';
+import { allocateCompositionSlug, compositionLookup, compositionPath, CompositionSlugError } from './compositionUrls';
 
           
 cloudinary.config({ 
@@ -24,18 +25,19 @@ cloudinary.config({
 
 class ActionInputError extends Error {}
 
-function actionFailure(error: unknown, fallbackMessage: string) {
+function actionFailure(error: unknown, fallbackMessage: string, duplicateMessage = 'That Work Story slug is already in use.') {
   const isDuplicateKeyError =
     typeof error === 'object' && error !== null && 'code' in error && error.code === 11000
   const isInputError =
     error instanceof ActionInputError ||
+    error instanceof CompositionSlugError ||
     error instanceof mongoose.Error.ValidationError ||
     isDuplicateKeyError
 
   return {
     status: isInputError ? 400 : 500,
     message: isDuplicateKeyError
-      ? 'That Work Story slug is already in use.'
+      ? duplicateMessage
       : isInputError && error instanceof Error
         ? error.message
         : fallbackMessage,
@@ -331,13 +333,19 @@ export async function getProjects(){
 export async function addComposition(composition: FormData){
   try {
     await connectToDb()
-    await Composition.create(compositionFields(composition))
+    await Composition.init()
+    const fields = compositionFields(composition)
+    const slug = await allocateCompositionSlug({ ...fields, requestedSlug: optionalText(composition, 'slug') },
+      async (candidate) => Boolean(await Composition.exists(compositionLookup(candidate))))
+    await Composition.create({ ...fields, slug, urlSlugs: [slug] })
     revalidatePath('/music-catalog')
+    revalidatePath(`/music-catalog/${slug}`)
+    revalidatePath('/sitemap.xml')
     revalidatePath('/admin')
-    return { status: 201, message: 'Composition added successfully' }
+    return { status: 201, message: 'Composition added successfully', slug }
   } catch (error) {
     console.error('Could not add composition:', error)
-    return actionFailure(error, 'The composition could not be added because of a server error.')
+    return actionFailure(error, 'The composition could not be added because of a server error.', 'That composition URL was just taken. Choose another slug or try again.')
   }
 }
 
@@ -357,19 +365,38 @@ export async function updateComposition(id: string, composition: FormData) {
   try {
     if (!mongoose.isValidObjectId(id)) throw new ActionInputError('Invalid composition id')
     await connectToDb()
-    const updated = await Composition.findByIdAndUpdate(id, compositionFields(composition), {
+    await Composition.init()
+    const existing = await Composition.findById(id)
+    if (!existing) return { status: 404, message: 'Composition not found.' }
+    const fields = compositionFields(composition)
+    const slug = await allocateCompositionSlug({
+      ...fields, requestedSlug: optionalText(composition, 'slug'), currentSlug: existing.slug,
+    }, async (candidate) => Boolean(await Composition.exists({
+      ...compositionLookup(candidate), _id: { $ne: existing._id },
+    })))
+    const updated = await Composition.findOneAndUpdate({
+      _id: id, __v: existing.__v ?? { $exists: false },
+    }, {
+      $set: { ...fields, slug },
+      $addToSet: { urlSlugs: { $each: [existing.slug, slug].filter(Boolean) } },
+      $inc: { __v: 1 },
+    }, {
       new: true,
       runValidators: true,
     })
-    if (!updated) return { status: 404, message: 'Composition not found.' }
+    if (!updated) return { status: 409, message: 'This composition changed while you were saving. Reload before trying again.' }
 
     revalidatePath('/music-catalog')
     revalidatePath(`/music-catalog/${id}`)
+    for (const previousSlug of existing.urlSlugs ?? []) revalidatePath(`/music-catalog/${previousSlug}`)
+    revalidatePath(compositionPath(existing))
+    revalidatePath(compositionPath(updated))
+    revalidatePath('/sitemap.xml')
     revalidatePath('/admin')
-    return { status: 200, message: 'Composition updated successfully' }
+    return { status: 200, message: 'Composition updated successfully', slug }
   } catch (error) {
     console.error('Could not update composition:', error)
-    return actionFailure(error, 'The composition could not be updated because of a server error.')
+    return actionFailure(error, 'The composition could not be updated because of a server error.', 'That composition URL was just taken. Choose another slug or try again.')
   }
 }
 
@@ -388,10 +415,10 @@ export async function getCompositions(search?: string, category?: string){
 }
 
 
-export async function getSingleComposition(id: string){
+export async function getSingleComposition(identifier: string){
   try {
     await connectToDb();
-    const composition: IComposition | null = await Composition.findById(id)
+    const composition: IComposition | null = await Composition.findOne(compositionLookup(identifier))
     if (!composition) return { status: 404, data: null }
     return { status: 200, data: composition }
   } catch {

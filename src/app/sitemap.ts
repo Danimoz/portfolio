@@ -1,6 +1,9 @@
 import type { MetadataRoute } from 'next'
 import { getCompositions, getProjects } from '@/lib/actions'
 import { absoluteUrl } from '@/lib/seo'
+import { compositionPath } from '@/lib/compositionUrls'
+
+export const dynamic = 'force-dynamic'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
@@ -27,7 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }))
 
   const compositionRoutes: MetadataRoute.Sitemap = compositions.map((composition) => ({
-    url: absoluteUrl(`/music-catalog/${composition._id}`),
+    url: absoluteUrl(compositionPath(composition)),
     lastModified: now,
     changeFrequency: 'monthly',
     priority: 0.75,

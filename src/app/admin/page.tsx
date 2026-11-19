@@ -23,6 +23,7 @@ export default async function AdminPage() {
   const compositions = compositionResult.data.map((composition) => ({
     _id: composition._id.toString(),
     title: composition.title,
+    slug: composition.slug ?? '',
     duration: composition.duration,
     yearOfComposition: composition.yearOfComposition,
     instrumentation: composition.instrumentation,

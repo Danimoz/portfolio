@@ -3,6 +3,7 @@ import Link from 'next/link'
 import PageIntro from '@/components/PageIntro'
 import { getCategories, getCompositions } from '@/lib/actions'
 import { DEFAULT_OG_IMAGE } from '@/lib/seo'
+import { compositionPath } from '@/lib/compositionUrls'
 import CompositionCategories from './categories'
 import CompositionSearch from './search'
 
@@ -63,7 +64,7 @@ export default async function MusicCatalog({
           {compositions.map((composition) => (
             <Link
               className="composition-entry"
-              href={`/music-catalog/${composition._id}`}
+              href={compositionPath(composition)}
               key={composition._id}
             >
               <div>

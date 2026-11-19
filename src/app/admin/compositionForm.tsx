@@ -1,9 +1,11 @@
 'use client'
 
-import { SubmitButton } from '@/components/SubmitButton'
+import { useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { addComposition, updateComposition } from '@/lib/actions'
 import type { ICategory, IComposition } from '@/types'
 import { notifyActionResult } from './notifyActionResult'
+import { normalizeCompositionSlug } from '@/lib/compositionUrls'
 
 export default function CompositionForm({
   categories,
@@ -13,21 +15,50 @@ export default function CompositionForm({
   composition?: IComposition
 }) {
   const formId = composition ? `composition-${composition._id}` : 'new-composition'
+  const [pending, setPending] = useState(false)
+  const [title, setTitle] = useState(composition?.title ?? '')
+  const [slug, setSlug] = useState(composition?.slug ?? '')
+  const sending = useRef(false)
+  const form = useRef<HTMLFormElement>(null)
+  const router = useRouter()
 
   async function action(formData: FormData) {
-    const result = composition
-      ? await updateComposition(composition._id, formData)
-      : await addComposition(formData)
-    notifyActionResult(result, {
-      success: composition ? 'Composition updated.' : 'Composition added.',
-      error: composition
-        ? 'The composition could not be updated.'
-        : 'The composition could not be added.',
-    })
+    if (sending.current) return
+    sending.current = true
+    setPending(true)
+    try {
+      const result = composition
+        ? await updateComposition(composition._id, formData)
+        : await addComposition(formData)
+      notifyActionResult(result, {
+        success: composition ? 'Composition updated.' : 'Composition added.',
+        error: composition ? 'The composition could not be updated.' : 'The composition could not be added.',
+      })
+      if (result.status < 300) {
+        if (!composition) {
+          form.current?.reset()
+          setTitle('')
+          setSlug('')
+        } else if ('slug' in result && typeof result.slug === 'string') {
+          setSlug(result.slug)
+        }
+        router.refresh()
+      }
+    } catch {
+      notifyActionResult({ status: 500, message: 'Could not save. Your changes are still here; please try again.' }, {
+        success: 'Composition saved.', error: 'Could not save the composition.',
+      })
+    } finally {
+      sending.current = false
+      setPending(false)
+    }
   }
 
   return (
-    <form action={action} className="console-form console-form--wide">
+    <form ref={form} onSubmit={(event) => {
+      event.preventDefault()
+      void action(new FormData(event.currentTarget))
+    }} className="console-form console-form--wide">
       <h2>{composition ? `Edit ${composition.title}` : 'Add composition'}</h2>
       <div className="console-form__columns">
         <div className="field-group">
@@ -36,7 +67,8 @@ export default function CompositionForm({
             type="text"
             id={`${formId}-title`}
             name="title"
-            defaultValue={composition?.title}
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
             required
           />
         </div>
@@ -70,6 +102,27 @@ export default function CompositionForm({
             required
           />
         </div>
+      </div>
+      <div className="field-group">
+        <label htmlFor={`${formId}-slug`}>URL slug</label>
+        <input
+          type="text"
+          id={`${formId}-slug`}
+          name="slug"
+          value={slug}
+          onChange={(event) => setSlug(event.target.value)}
+          maxLength={100}
+          spellCheck={false}
+          autoCapitalize="none"
+          aria-describedby={`${formId}-slug-help`}
+          placeholder={normalizeCompositionSlug(title) || 'generated-from-the-title'}
+        />
+        <p id={`${formId}-slug-help`}>
+          /music-catalog/{normalizeCompositionSlug(slug) || composition?.slug || normalizeCompositionSlug(title) || 'your-composition'}
+          {' — '}{composition?.slug
+            ? 'Title edits keep this URL. If you change the slug, old links will redirect.'
+            : 'Leave empty to generate from the title. A year or instrumentation is added if needed.'}
+        </p>
       </div>
       <div className="field-group">
         <label htmlFor={`${formId}-note`}>Note from the composer</label>
@@ -129,10 +182,9 @@ export default function CompositionForm({
         </select>
         <p>Use Control or Command to select more than one.</p>
       </div>
-      <SubmitButton
-        buttonText={composition ? 'Save composition' : 'Add composition'}
-        pendingText={composition ? 'Saving composition' : 'Adding composition'}
-      />
+      <button type="submit" className="button button--primary" disabled={pending} aria-disabled={pending}>
+        {pending ? 'Saving composition…' : composition ? 'Save composition' : 'Add composition'}
+      </button>
     </form>
   )
 }

@@ -1,11 +1,14 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import { getSingleComposition } from '@/lib/actions'
 import { absoluteUrl, serializeJsonLd, truncateDescription } from '@/lib/seo'
 import { separateStringWithCommas } from '@/lib/utils'
 import { getYouTubeEmbedUrl, getYouTubeVideoId } from '@/lib/youtube'
 import styles from './composition.module.css'
+import { compositionPath, compositionRedirect } from '@/lib/compositionUrls'
+
+export const dynamic = 'force-dynamic'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -26,12 +29,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: { canonical: `/music-catalog/${id}` },
+    alternates: { canonical: compositionPath(data) },
     openGraph: {
       type: 'music.song',
       title,
       description,
-      url: `/music-catalog/${id}`,
+      url: compositionPath(data),
     },
     twitter: {
       card: 'summary',
@@ -45,6 +48,8 @@ export default async function SingleComposition({ params }: Props) {
   const { id } = await params
   const { data: composition, status } = await getSingleComposition(id)
   if (status === 404 || !composition) notFound()
+  const redirect = compositionRedirect(composition, id)
+  if (redirect) permanentRedirect(redirect)
 
   const recordings = composition.youtubeLinks
     ? separateStringWithCommas(composition.youtubeLinks)
@@ -55,7 +60,7 @@ export default async function SingleComposition({ params }: Props) {
       })
       .filter((recording): recording is { videoId: string; embedUrl: string } => Boolean(recording))
     : []
-  const canonicalUrl = absoluteUrl(`/music-catalog/${composition._id}`)
+  const canonicalUrl = absoluteUrl(compositionPath(composition))
   const description = truncateDescription(
     composition.noteFromComposer ||
     composition.compositionText ||

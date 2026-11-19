@@ -24,6 +24,8 @@ export type ICategory = {
 
 export type IComposition = {
   title: string,
+  slug?: string,
+  urlSlugs?: string[],
   duration: string,
   yearOfComposition: string,
   instrumentation: string,

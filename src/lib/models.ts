@@ -39,6 +39,8 @@ const compositionCategorySchema = new Schema({
 
 const compositionSchema = new Schema({
   title: { type: String, required: true },
+  slug: { type: String, trim: true, lowercase: true },
+  urlSlugs: { type: [String], default: undefined },
   duration: { type: String, required: true },
   yearOfComposition: { type: String, required: true },
   instrumentation: { type: String, required: true },
@@ -52,6 +54,8 @@ const compositionSchema = new Schema({
   }],
   categories: [{ type: Schema.Types.ObjectId, ref: 'CompositionCategory' }],
 })
+
+compositionSchema.index({ urlSlugs: 1 }, { unique: true, sparse: true, name: 'composition_url_slugs' })
 
 
 export const Project = mongoose.models.Project || model("Project", projectSchema);
